@@ -1,0 +1,11 @@
+{ application
+, oauth1
+, [ {description  , "OAuth 1.0 core protocol implementation."}
+  , {vsn          , "0.0.0"}
+  , {registered   , []}
+  , {applications ,
+      [ kernel
+      , stdlib
+      ]}
+  , {env, []}
+  ]}.
