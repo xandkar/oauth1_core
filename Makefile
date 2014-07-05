@@ -5,7 +5,18 @@
 
 fresh-build: \
 	clean \
+	deps \
 	compile
+
+deps: \
+	deps-get \
+	deps-update
+
+deps-get:
+	@rebar get-deps
+
+deps-update:
+	@rebar update-deps
 
 compile:
 	@rebar compile
