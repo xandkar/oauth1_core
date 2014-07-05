@@ -9,5 +9,6 @@
       ]}
   , {env,
       [ {storage_module , oauth1_storage_ets}
+      , {storage_bucket_prefix , <<"oauth1-">>}
       ]}
   ]}.

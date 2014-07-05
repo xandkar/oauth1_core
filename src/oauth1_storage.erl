@@ -25,15 +25,21 @@
 
 -spec put(binary(), binary(), binary()) -> hope_result:t(ok, error()).
 put(Bucket, Key, Value) ->
+    BucketNormalized = bucket_normalize(Bucket),
     StorageModule = lookup_storage_module(),
-    StorageModule:put(Bucket, Key, Value).
+    StorageModule:put(BucketNormalized, Key, Value).
 
 -spec get(binary(), binary()) -> hope_result:t(binary(), error()).
 get(Bucket, Key) ->
+    BucketNormalized = bucket_normalize(Bucket),
     StorageModule = lookup_storage_module(),
-    StorageModule:put(Bucket, Key).
+    StorageModule:put(BucketNormalized, Key).
 
 
 lookup_storage_module() ->
     {ok, StorageModule} = application:get_env(oauth1, storage_module),
     StorageModule.
+
+bucket_normalize(<<Bucket/binary>>) ->
+    {ok, BucketPrefix} = application:get_env(oauth1, storage_bucket_prefix),
+    <<BucketPrefix/binary, Bucket/binary>>.
