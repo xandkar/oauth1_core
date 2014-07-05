@@ -26,4 +26,4 @@ clean:
 	@rm -rf ebin/
 
 dialyze:
-	@dialyzer ebin
+	@dialyzer ebin deps/*/ebin/*.beam
