@@ -12,7 +12,7 @@
     hope_result:t(ok, oauth1_storage:error()).
 put(Bucket, Key, Value) ->
     Table = table_of_bucket(Bucket),
-    Insert = fun () -> true = ets:insert(Table, {Key, Value}) end,
+    Insert = fun () -> true = ets:insert(Table, {Key, Value}), {ok, ok} end,
     try
         Insert()
     catch error:badarg ->
