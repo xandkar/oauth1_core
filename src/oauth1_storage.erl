@@ -13,14 +13,12 @@
 -type error() :: not_found
                | io_error
                .
+
 -callback put(binary(), binary(), binary()) ->
     hope_result:t(ok, error()).
 
 -callback get(binary(), binary()) ->
     hope_result:t(binary(), error()).
-
-
--define(not_implemented, error(not_implemented)).
 
 
 -spec put(binary(), binary(), binary()) -> hope_result:t(ok, error()).

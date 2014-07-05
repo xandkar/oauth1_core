@@ -8,9 +8,6 @@
     ]).
 
 
--define(not_implemented, error(not_implemented)).
-
-
 -spec put(binary(), binary(), binary()) ->
     hope_result:t(ok, oauth1_storage:error()).
 put(Bucket, Key, Value) ->
