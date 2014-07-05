@@ -7,5 +7,7 @@
       [ kernel
       , stdlib
       ]}
-  , {env, []}
+  , {env,
+      [ {storage_module , oauth1_storage_ets}
+      ]}
   ]}.
