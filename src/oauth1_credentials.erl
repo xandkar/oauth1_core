@@ -27,9 +27,9 @@
               | token
               .
 
--type id() :: binary().
+-type id() :: oauth1_uuid:t().
 
--type secret() :: binary().
+-type secret() :: oauth1_uuid:t().
 
 -record(t,
     { id     :: id()
@@ -41,8 +41,8 @@
 
 generate() ->
     #t
-    { id     = uuid_generate()
-    , secret = uuid_generate()
+    { id     = oauth1_uuid:generate()
+    , secret = oauth1_uuid:generate()
     }.
 
 -spec get_id(t()) -> id().
@@ -70,6 +70,3 @@ fetch(<<ID/binary>>, Type) ->
 type_to_bucket_name(client) -> <<"oauth1_credentials_client">>;
 type_to_bucket_name(tmp)    -> <<"oauth1_credentials_tmp">>;
 type_to_bucket_name(token)  -> <<"oauth1_credentials_token">>.
-
-uuid_generate() ->
-    list_to_binary(uuid:uuid_to_string(uuid:get_v4())).
