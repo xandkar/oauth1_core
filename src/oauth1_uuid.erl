@@ -9,9 +9,11 @@
     ]).
 
 
--type t() :: binary().
+-type t() ::
+    binary().
 
 
--spec generate() -> t().
+-spec generate() ->
+    t().
 generate() ->
     list_to_binary(uuid:uuid_to_string(uuid:get_v4())).

@@ -22,21 +22,25 @@
     ]).
 
 
--type type() :: client
-              | tmp
-              | token
-              .
+-type type() ::
+      client
+    | tmp
+    | token
+    .
 
--type id() :: oauth1_uuid:t().
+-type id() ::
+    oauth1_uuid:t().
 
--type secret() :: oauth1_uuid:t().
+-type secret() ::
+    oauth1_uuid:t().
 
 -record(t,
     { id     :: id()
     , secret :: secret()
     }).
 
--opaque t() :: #t{}.
+-opaque t() ::
+    #t{}.
 
 
 generate() ->
@@ -45,20 +49,24 @@ generate() ->
     , secret = oauth1_uuid:generate()
     }.
 
--spec get_id(t()) -> id().
+-spec get_id(t()) ->
+    id().
 get_id(#t{id=ID}) ->
     ID.
 
--spec get_secret(t()) -> secret().
+-spec get_secret(t()) ->
+    secret().
 get_secret(#t{secret=Secret}) ->
     Secret.
 
--spec store(t(), type()) -> hope_result:t(ok, oauth1_storage:error()).
+-spec store(t(), type()) ->
+    hope_result:t(ok, oauth1_storage:error()).
 store(#t{id=Key, secret=Value}, Type) ->
     Bucket = type_to_bucket_name(Type),
     oauth1_storage:put(Bucket, Key, Value).
 
--spec fetch(binary(), type()) -> hope_result:t(t(), oauth1_storage:error()).
+-spec fetch(binary(), type()) ->
+    hope_result:t(t(), oauth1_storage:error()).
 fetch(<<ID/binary>>, Type) ->
     Bucket = type_to_bucket_name(Type),
     oauth1_storage:get(Bucket, ID).

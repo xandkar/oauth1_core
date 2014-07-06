@@ -15,15 +15,18 @@
     ]).
 
 
--type id() :: oauth1_credentials:id().
+-type id() ::
+    oauth1_credentials:id().
 
--type secret() :: oauth1_credentials:secret().
+-type secret() ::
+    oauth1_credentials:secret().
 
 -record(t,
     { credentials :: oauth1_credentials:t()
     }).
 
--opaque t() :: #t{}.
+-opaque t() ::
+    #t{}.
 
 
 -define(CREDENTIALS_TYPE, client).

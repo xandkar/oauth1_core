@@ -10,9 +10,10 @@
     ]).
 
 
--type error() :: not_found
-               | io_error
-               .
+-type error() ::
+      not_found
+    | io_error
+    .
 
 -callback put(binary(), binary(), binary()) ->
     hope_result:t(ok, error()).
@@ -21,13 +22,15 @@
     hope_result:t(binary(), error()).
 
 
--spec put(binary(), binary(), binary()) -> hope_result:t(ok, error()).
+-spec put(binary(), binary(), binary()) ->
+    hope_result:t(ok, error()).
 put(Bucket, Key, Value) ->
     BucketNormalized = bucket_normalize(Bucket),
     StorageModule = lookup_storage_module(),
     StorageModule:put(BucketNormalized, Key, Value).
 
--spec get(binary(), binary()) -> hope_result:t(binary(), error()).
+-spec get(binary(), binary()) ->
+    hope_result:t(binary(), error()).
 get(Bucket, Key) ->
     BucketNormalized = bucket_normalize(Bucket),
     StorageModule = lookup_storage_module(),

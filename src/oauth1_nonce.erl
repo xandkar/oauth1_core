@@ -9,9 +9,11 @@
     ]).
 
 
--type t() :: oauth1_uuid:t().
+-type t() ::
+    oauth1_uuid:t().
 
 
--spec generate() -> t().
+-spec generate() ->
+    t().
 generate() ->
     oauth1_uuid:generate().

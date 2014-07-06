@@ -99,7 +99,8 @@ initiate(#oauth1_server_args_initiate
 %% uri of the client "ready" callback with the tmp token and a verifier query
 %% params.
 %% @end
--spec authorize(oauth1_credentials_tmp:id()) -> oauth1_uri:t().
+-spec authorize(oauth1_credentials_tmp:id()) ->
+    oauth1_uri:t().
 authorize(_TempCreds) ->
     ?not_implemented.
 

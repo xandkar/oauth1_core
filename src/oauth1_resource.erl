@@ -12,28 +12,34 @@
     , get_uri/1
     ]).
 
--type realm() :: binary().
+-type realm() ::
+    binary().
 
--type uri() :: oauth1_uri:t().
+-type uri() ::
+    oauth1_uri:t().
 
 -record(t,
     { realm :: realm()
     , uri   :: uri()
     }).
 
--opaque t() :: #t{}.
+-opaque t() ::
+    #t{}.
 
--spec cons(realm(), uri()) -> t().
+-spec cons(realm(), uri()) ->
+    t().
 cons(Realm, URI) ->
     #t
     { realm = Realm
     , uri   = URI
     }.
 
--spec get_realm(t()) -> realm().
+-spec get_realm(t()) ->
+    realm().
 get_realm(#t{realm=Realm}) ->
     Realm.
 
--spec get_uri(t()) -> uri().
+-spec get_uri(t()) ->
+    uri().
 get_uri(#t{uri=URI}) ->
     URI.

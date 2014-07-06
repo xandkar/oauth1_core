@@ -12,9 +12,10 @@
     ]).
 
 
--type scheme() :: http
-                | https
-                .
+-type scheme() ::
+      http
+    | https
+    .
 
 -record(t,
     { scheme         :: scheme()
@@ -24,12 +25,15 @@
     , path_and_query :: binary()
     }).
 
--opaque t() :: #t{}.
+-opaque t() ::
+    #t{}.
 
--type args_cons() :: #oauth1_uri_args_cons{}.
+-type args_cons() ::
+    #oauth1_uri_args_cons{}.
 
 
--spec cons(args_cons()) -> t().
+-spec cons(args_cons()) ->
+    t().
 cons(#oauth1_uri_args_cons
     { scheme         = Scheme
     , user           = User

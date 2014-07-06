@@ -11,7 +11,8 @@
     ]).
 
 
--type t() :: integer().
+-type t() ::
+    integer().
 
 
 -spec get() ->
