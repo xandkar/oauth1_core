@@ -18,27 +18,26 @@
     , validate_resource_request/1
     ]).
 
--type error() :: error_bad_request()
-               | error_unauthorized()
-               .
-
 -type error_bad_request() ::
-    { bad_request
-    , parameters_unsupported
+      parameters_unsupported
     | parameters_missing
     | parameters_duplicated
     | signature_method_unsupported
-    }.
+    .
 
 -type error_unauthorized() ::
-    { unauthorized
-    , signature_invalid
+      signature_invalid
     | client_credentials_invalid
     | token_invalid
     | token_expired
     | nonce_invalid
     | nonce_used
-    }.
+    .
+
+-type error() ::
+      {bad_request  , error_bad_request()}
+    | {unauthorized , error_unauthorized()}
+    .
 
 -type authorization_verifier() ::
     boolean().
