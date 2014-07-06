@@ -5,7 +5,7 @@
     ]).
 
 
--spec ready(TempToken :: oauth1_credentials:id(tmp), Verifier :: binary()) ->
+-spec ready(TempToken :: oauth1_credentials:id(tmp), oauth1_verifier:t()) ->
     hope_result:t(ok, oauth1_storage:error()).
 ready(_TempToken, _Verifier) ->
 %   {ok, ConsumerKey} = application:get_env(oauth1, client_consumer_key),
