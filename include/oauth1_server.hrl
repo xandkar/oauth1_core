@@ -7,7 +7,7 @@
     , nonce               :: oauth1_nonce:t()
 
     % Client "ready" callback URI that will be called by the resource owner
-    % withe temporary token and a verifier, after "authorize" step:
+    % with the temporary token and a verifier, after "authorize" step:
     , client_callback_uri :: oauth1_uri:t()
     }).
 
