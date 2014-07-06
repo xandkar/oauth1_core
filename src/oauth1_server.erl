@@ -63,12 +63,12 @@
        , Secret :: binary()
        .
 register_new_client() ->
-    ClientCredentials = oauth1_credentials_client:generate(),
-    case oauth1_credentials_client:store(ClientCredentials)
+    ClientCredentials = oauth1_credentials:generate(client),
+    case oauth1_credentials:store(ClientCredentials)
     of  {ok, ok} ->
             Pair =
-                { oauth1_credentials_client:get_id(ClientCredentials)
-                , oauth1_credentials_client:get_secret(ClientCredentials)
+                { oauth1_credentials:get_id(ClientCredentials)
+                , oauth1_credentials:get_secret(ClientCredentials)
                 },
             {ok, Pair}
     ;   {error, _}=Error ->
@@ -79,7 +79,7 @@ register_new_client() ->
 %% @end
 -spec initiate(args_initiate()) ->
     hope_result:t(Ok, Error)
-    when Ok    :: {oauth1_credentials_tmp:t(), CallbackConfirmed :: boolean()}
+    when Ok    :: {oauth1_credentials:t(tmp), CallbackConfirmed :: boolean()}
        , Error :: oauth1_storage:error()
                 | error()
        .
@@ -99,7 +99,7 @@ initiate(#oauth1_server_args_initiate
 %% uri of the client "ready" callback with the tmp token and a verifier query
 %% params.
 %% @end
--spec authorize(oauth1_credentials_tmp:id()) ->
+-spec authorize(oauth1_credentials:id(tmp)) ->
     oauth1_uri:t().
 authorize(_TempCreds) ->
     ?not_implemented.
@@ -108,7 +108,7 @@ authorize(_TempCreds) ->
 %% @end
 -spec token(args_token()) ->
     hope_result:t(Ok, Error)
-    when Ok    :: oauth1_credentials_token:t()
+    when Ok    :: oauth1_credentials:t(token)
        , Error :: oauth1_storage:error()
                 | error()
        .

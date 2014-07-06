@@ -1,80 +1,95 @@
-%%% ---------------------------------------------------------------------------
-%%% Internal module. Used as the implementation of:
-%%% - oauth1_credentials_client
-%%% - oauth1_credentials_tmp
-%%% - oauth1_credentials_token
-%%% ---------------------------------------------------------------------------
 -module(oauth1_credentials).
 
 -export_type(
-    [ t/0
-    , type/0
-    , id/0
-    , secret/0
+    [ t/1
+    , credentials_type/0
+    , id/1
+    , secret/1
     ]).
 
 -export(
-    [ generate/0
+    [ generate/1
     , get_id/1
     , get_secret/1
-    , store/2
-    , fetch/2
+    , store/1
+    , fetch/1
     ]).
 
 
--type type() ::
+-type credentials_type() ::
       client
     | tmp
     | token
     .
 
--type id() ::
-    oauth1_uuid:t().
+-type id(CredentialsType) ::
+    {CredentialsType, oauth1_uuid:t()}.
 
--type secret() ::
-    oauth1_uuid:t().
+-type secret(CredentialsType) ::
+    {CredentialsType, oauth1_uuid:t()}.
 
 -record(t,
-    { id     :: id()
-    , secret :: secret()
+    { type   :: credentials_type()
+    , id     :: id(credentials_type())
+    , secret :: secret(credentials_type())
     }).
 
--opaque t() ::
-    #t{}.
+%% t() is really meant to be opaque, but alas - Dialyzer does not (yet) support
+%% polymorphic opaque types :(
+-type t(CredentialsType) ::
+    #t{type :: CredentialsType}.
 
 
-generate() ->
+-spec generate(credentials_type()) ->
+    t(credentials_type()).
+generate(Type) ->
     #t
-    { id     = oauth1_uuid:generate()
-    , secret = oauth1_uuid:generate()
+    { type   = Type
+    , id     = {Type, oauth1_uuid:generate()}
+    , secret = {Type, oauth1_uuid:generate()}
     }.
 
--spec get_id(t()) ->
-    id().
-get_id(#t{id=ID}) ->
+-spec get_id(t(credentials_type())) ->
+    id(credentials_type()).
+get_id(#t{type=Type, id={Type, _}=ID, secret={Type, _}}) ->
     ID.
 
--spec get_secret(t()) ->
-    secret().
-get_secret(#t{secret=Secret}) ->
+-spec get_secret(t(credentials_type())) ->
+    secret(credentials_type()).
+get_secret(#t{type=Type, id={Type, _}, secret={Type, _}=Secret}) ->
     Secret.
 
--spec store(t(), type()) ->
+-spec store(t(credentials_type())) ->
     hope_result:t(ok, oauth1_storage:error()).
-store(#t{id=Key, secret=Value}, Type) ->
+store(#t{type=Type, id={Type, Key}, secret={Type, Value}}) ->
     Bucket = type_to_bucket_name(Type),
     oauth1_storage:put(Bucket, Key, Value).
 
--spec fetch(binary(), type()) ->
-    hope_result:t(t(), oauth1_storage:error()).
-fetch(<<ID/binary>>, Type) ->
+-spec fetch(id(credentials_type())) ->
+    hope_result:t(binary(), oauth1_storage:error()).
+fetch({Type, <<ID/binary>>}) ->
     Bucket = type_to_bucket_name(Type),
-    oauth1_storage:get(Bucket, ID).
+    case oauth1_storage:get(Bucket, ID)
+    of  {error, _}=Error ->
+            Error
+    ;   {ok, Secret} ->
+            #t
+            { type   = Type
+            , id     = {Type, ID}
+            , secret = {Type, Secret}
+            }
+    end.
+
 
 %% ============================================================================
 %% Helpers
 %% ============================================================================
 
-type_to_bucket_name(client) -> <<"oauth1_credentials_client">>;
-type_to_bucket_name(tmp)    -> <<"oauth1_credentials_tmp">>;
-type_to_bucket_name(token)  -> <<"oauth1_credentials_token">>.
+type_to_bucket_name(Type) ->
+    Prefix = <<"oauth1-credentials">>,
+    Name   = type_to_binary(Type),
+    <<Prefix/binary, "-", Name/binary>>.
+
+type_to_binary(client) -> <<"client">>;
+type_to_binary(tmp)    -> <<"tmp">>;
+type_to_binary(token)  -> <<"token">>.
