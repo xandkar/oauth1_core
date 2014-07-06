@@ -120,6 +120,7 @@ token(#oauth1_server_args_token
     , timestamp        = _Timestamp
     , nonce            = _Nonce
     , temp_token       = _TempToken
+    , verifier         = _Verifier
     }
 ) ->
     ?not_implemented.
