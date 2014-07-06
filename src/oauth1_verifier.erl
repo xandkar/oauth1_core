@@ -1,0 +1,58 @@
+-module(oauth1_verifier).
+
+-export_type(
+    [ t/0
+    ]).
+
+-export(
+    [ generate/1
+    , get_value/1
+    , fetch/1
+    , store/1
+    ]).
+
+
+-record(t,
+    { temp_token  :: oauth1_credentials_tmp:id()
+    , verifier    :: binary()
+    }).
+
+-opaque t() ::
+    #t{}.
+
+
+-spec generate(oauth1_credentials_tmp:id()) ->
+    t().
+generate(TempToken) ->
+    #t
+    { temp_token = TempToken
+    , verifier   = oauth1_uuid:generate()
+    }.
+
+-spec get_value(t()) ->
+    binary().
+get_value(#t{verifier=Verifier}) ->
+    Verifier.
+
+
+-spec store(t()) ->
+    hope_result:t(ok, oauth1_storage:error()).
+store(#t{temp_token=Key, verifier=Value}) ->
+    oauth1_storage:put(storage_bucket(), Key, Value).
+
+-spec fetch(TempToken :: oauth1_credentials_tmp:id()) ->
+    hope_result:t(t(), oauth1_storage:error()).
+fetch(<<TempToken/binary>>) ->
+    case oauth1_storage:get(storage_bucket(), TempToken)
+    of  {error, _}=Error ->
+            Error
+    ;   {ok, Verifier} ->
+            #t
+            { temp_token = TempToken
+            , verifier   = Verifier
+            }
+    end.
+
+
+storage_bucket() ->
+    <<"oauth1_verifier">>.
