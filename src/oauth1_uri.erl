@@ -1,12 +1,16 @@
 -module(oauth1_uri).
 
+-include_lib("oauth1_uri.hrl").
+
 -export_type(
     [ t/0
+    , args_cons/0
     ]).
 
 -export(
     [ cons/1
     ]).
+
 
 -type scheme() :: http
                 | https
@@ -22,10 +26,11 @@
 
 -opaque t() :: #t{}.
 
--include_lib("oauth1_uri.hrl").
+-type args_cons() :: #oauth1_uri_args_cons{}.
 
--spec cons(oauth1_uri_cons()) -> t().
-cons(#oauth1_uri_cons
+
+-spec cons(args_cons()) -> t().
+cons(#oauth1_uri_args_cons
     { scheme         = Scheme
     , user           = User
     , host           = Host
