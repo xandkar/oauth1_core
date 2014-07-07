@@ -6,4 +6,8 @@
     , consumer_key         :: oauth1_credentials:id(client)
     , timestamp            :: oauth1_timestamp:t()
     , nonce                :: oauth1_nonce:t()
+
+    , token         = none :: hope_option:t(oauth1_credentials:id(tmp | token))
+    , verifier      = none :: hope_option:t(oauth1_verifier:t())
+    , callback      = none :: hope_option:t(oauth1_uri:t())
     }).

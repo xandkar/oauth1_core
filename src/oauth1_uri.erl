@@ -9,6 +9,7 @@
 
 -export(
     [ cons/1
+    , get_path_and_query/1
     ]).
 
 
@@ -49,3 +50,8 @@ cons(#oauth1_uri_args_cons
     , port           = Port
     , path_and_query = PathAndQuery
     }.
+
+-spec get_path_and_query(t()) ->
+    binary().
+get_path_and_query(#t{path_and_query=PathAndQuery}) ->
+    PathAndQuery.
