@@ -11,7 +11,7 @@
     ]).
 
 
--opaque t() ::
+-type t() ::
     binary().
 
 -type args_cons() ::
