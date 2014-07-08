@@ -36,9 +36,8 @@ cons(#oauth1_signature_base_string_args_cons
     %, callback             = CallbackURIOpt
     }
 ) ->
-    Uri             = oauth1_resource:get_uri(Resource),
-    _UriPathAndQuery = oauth1_uri:get_path_and_query(Uri),
-    %UriBin          = oauth1_uri:to_bin(Uri),
+    URI           = oauth1_resource:get_uri(Resource),
+    BaseStringURI = oauth1_signature_base_string_uri:cons(URI),
     %Token =
         %case TokenOpt
         %of  none                    -> <<>>
@@ -65,7 +64,7 @@ cons(#oauth1_signature_base_string_args_cons
     %
     << HttpMeth/binary
     ,  ?AMPERSAND
-    %,  UriBin/binary
+    ,  BaseStringURI/binary
     , ?AMPERSAND
     %,  ParametersNormalized/binary
     >>.
