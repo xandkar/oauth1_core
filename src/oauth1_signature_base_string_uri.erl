@@ -46,5 +46,5 @@
 %%    "https://www.example.net:8080/".
 -spec cons(oauth1_uri:t()) ->
     t().
-cons(_URI) ->
-    error(not_implemented).
+cons(URI) ->
+    oauth1_uri:to_bin(URI).

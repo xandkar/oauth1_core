@@ -44,7 +44,7 @@ cons(#oauth1_signature_args_cons
     , nonce                = Nonce
 
     , client_shared_secret = ClientSharedSecret
-    , token_shared_secret  = TokenSharedSecret
+    ,  token_shared_secret =  TokenSharedSecret
 
     , token                = TokenOpt
     , verifier             = VerifierOpt

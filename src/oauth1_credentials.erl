@@ -11,6 +11,7 @@
     [ generate/1
     , get_id/1
     , get_secret/1
+    , id_to_bin/1
     , store/1
     , fetch/1
     ]).
@@ -58,6 +59,11 @@ get_id(#t{type=Type, id={Type, _}=ID, secret={Type, _}}) ->
     secret(credentials_type()).
 get_secret(#t{type=Type, id={Type, _}, secret={Type, _}=Secret}) ->
     Secret.
+
+-spec id_to_bin(id(credentials_type())) ->
+    binary().
+id_to_bin({_, ID}) ->
+    ID.
 
 -spec store(t(credentials_type())) ->
     hope_result:t(ok, oauth1_storage:error()).
