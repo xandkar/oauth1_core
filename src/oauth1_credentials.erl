@@ -91,11 +91,15 @@ fetch({Type, <<ID/binary>>}) ->
 %% Helpers
 %% ============================================================================
 
+-spec type_to_bucket_name(credentials_type()) ->
+    binary().
 type_to_bucket_name(Type) ->
     Prefix = <<"oauth1-credentials">>,
     Name   = type_to_binary(Type),
     <<Prefix/binary, "-", Name/binary>>.
 
+-spec type_to_binary(credentials_type()) ->
+    binary().
 type_to_binary(client) -> <<"client">>;
 type_to_binary(tmp)    -> <<"tmp">>;
 type_to_binary(token)  -> <<"token">>.

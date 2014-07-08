@@ -34,5 +34,7 @@ get(Bucket, Key) ->
     end.
 
 
+-spec table_of_bucket(binary()) ->
+    atom().
 table_of_bucket(<<Bucket/binary>>) ->
     binary_to_atom(Bucket, utf8).

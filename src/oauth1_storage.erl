@@ -37,10 +37,14 @@ get(Bucket, Key) ->
     StorageModule:put(BucketNormalized, Key).
 
 
+-spec lookup_storage_module() ->
+    atom().
 lookup_storage_module() ->
     {ok, StorageModule} = application:get_env(oauth1, storage_module),
     StorageModule.
 
+-spec bucket_normalize(binary()) ->
+    binary().
 bucket_normalize(<<Bucket/binary>>) ->
     {ok, BucketPrefix} = application:get_env(oauth1, storage_bucket_prefix),
     <<BucketPrefix/binary, Bucket/binary>>.

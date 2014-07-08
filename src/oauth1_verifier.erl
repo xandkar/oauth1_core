@@ -54,5 +54,7 @@ fetch({tmp, <<Token/binary>>}=TempToken) ->
     end.
 
 
+-spec storage_bucket() ->
+    binary().
 storage_bucket() ->
     <<"oauth1_verifier">>.
