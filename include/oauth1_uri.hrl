@@ -4,5 +4,6 @@
     , host           :: binary()
     , port           :: integer()
     , path_and_query :: binary()
+    , path           :: binary()
     , query     = [] :: [{binary(), binary()}]
     }).
