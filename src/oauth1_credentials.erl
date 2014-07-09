@@ -72,7 +72,7 @@ store(#t{type=Type, id={Type, Key}, secret={Type, Value}}) ->
     oauth1_storage:put(Bucket, Key, Value).
 
 -spec fetch(id(credentials_type())) ->
-    hope_result:t(binary(), oauth1_storage:error()).
+    hope_result:t(t(credentials_type()), oauth1_storage:error()).
 fetch({Type, <<ID/binary>>}) ->
     Bucket = type_to_bucket_name(Type),
     case oauth1_storage:get(Bucket, ID)
