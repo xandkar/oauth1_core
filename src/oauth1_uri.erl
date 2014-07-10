@@ -11,6 +11,7 @@
     [ cons/1
     , get_query/1
     , set_query/2
+    , add_query/3
     , to_bin/1
     , of_bin/1
     ]).
@@ -69,6 +70,12 @@ get_query(#t{query=Query}) ->
     t().
 set_query(#t{}=T, QueryParams) ->
     T#t{query=QueryParams}.
+
+-spec add_query(t(), Key :: binary(), Value :: binary()) ->
+    t().
+add_query(#t{query=Query1}=T, <<Key/binary>>, <<Value/binary>>) ->
+    Query2 = orddict:store(Key, Value, Query1),
+    T#t{query=Query2}.
 
 -spec to_bin(t()) ->
     binary().
