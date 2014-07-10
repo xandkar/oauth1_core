@@ -92,7 +92,7 @@ initiate(#oauth1_server_args_initiate
     , timestamp           = Timestamp
     , nonce               = Nonce
 
-    , client_callback_uri = ClientCallbackURI
+    , client_callback_uri = CallbackURI
     , host                = Host
     }
 ) ->
@@ -119,7 +119,7 @@ initiate(#oauth1_server_args_initiate
 
                 , token                = none
                 , verifier             = none
-                , callback             = {some, ClientCallbackURI}
+                , callback             = {some, CallbackURI}
                 },
             SigComputed       = oauth1_signature:cons(SigArgs),
             SigComputedDigest = oauth1_signature:get_digest(SigComputed),
@@ -137,8 +137,17 @@ initiate(#oauth1_server_args_initiate
                                     Error
                             ;   {ok, ok} ->
                                     TokenID = oauth1_credentials:get_id(Token),
-                                    IsCallbackConfirmed = false,
-                                    {ok, {TokenID, IsCallbackConfirmed}}
+                                    Callback =
+                                        oauth1_callback:cons( TokenID
+                                                            , CallbackURI
+                                                            ),
+                                    case oauth1_callback:store(Callback)
+                                    of  {error, _}=Error ->
+                                            Error
+                                    ;   {ok, ok} ->
+                                            IsCallbackConfirmed = false,
+                                            {ok, {TokenID, IsCallbackConfirmed}}
+                                    end
                             end
                     ;   {error, _}=Error ->
                             Error
