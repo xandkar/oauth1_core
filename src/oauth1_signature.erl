@@ -11,6 +11,7 @@
 
 -export(
     [ cons/1
+    , get_digest/1
     ]).
 
 
@@ -44,7 +45,7 @@ cons(#oauth1_signature_args_cons
     , nonce                = Nonce
 
     , client_shared_secret = ClientSharedSecret
-    ,  token_shared_secret =  TokenSharedSecret
+    ,  token_shared_secret =  TokenSharedSecretOpt
 
     , token                = TokenOpt
     , verifier             = VerifierOpt
@@ -65,6 +66,7 @@ cons(#oauth1_signature_args_cons
         , verifier             = VerifierOpt
         , callback             = CallbackURIOpt
         },
+    TokenSharedSecret = hope_option:get(TokenSharedSecretOpt, <<>>),
     Key = oauth1_signature_key:cons(ClientSharedSecret, TokenSharedSecret),
     Text = oauth1_signature_base_string:cons(BaseStringArgs),
     DigestBin = crypto:hmac(sha, Key, Text),
@@ -73,3 +75,8 @@ cons(#oauth1_signature_args_cons
     { method = Method
     , digest = DigestBase64
     }.
+
+-spec get_digest(t()) ->
+    digest().
+get_digest(#t{digest=Digest}) ->
+    Digest.

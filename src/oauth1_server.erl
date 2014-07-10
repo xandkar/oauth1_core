@@ -1,6 +1,7 @@
 -module(oauth1_server).
 
 -include_lib("oauth1_server.hrl").
+-include_lib("oauth1_signature.hrl").
 
 -export_type(
     [ error/0
@@ -84,16 +85,66 @@ register_new_client() ->
                 | error()
        .
 initiate(#oauth1_server_args_initiate
-    { realm               = _Realm
-    , consumer_key        = _ConsumerKey
-    , signature           = _Signature
-    , signature_method    = _SignatureMethod
-    , timestamp           = _Timestamp
-    , nonce               = _Nonce
-    , client_callback_uri = _ClientCallbackURI
+    { resource            = Resource
+    , consumer_key        = ConsumerKey
+    , signature           = SigGiven
+    , signature_method    = SigMethod = 'HMAC_SHA1'
+    , timestamp           = Timestamp
+    , nonce               = Nonce
+
+    , client_callback_uri = ClientCallbackURI
+    , host                = Host
     }
 ) ->
-    ?not_implemented.
+    case oauth1_credentials:fetch(ConsumerKey)
+    of  {error, not_found} ->
+            {error, {unauthorized, client_credentials_invalid}}
+    ;   {error, _}=Error ->
+            Error
+    ;   {ok, ClientCredentials} ->
+            ClientSharedSecret =
+                oauth1_credentials:get_secret(ClientCredentials),
+            SigArgs =
+                #oauth1_signature_args_cons
+                { method               = SigMethod
+                , http_req_method      = <<"POST">>
+                , http_req_host        = Host
+                , resource             = Resource
+                , consumer_key         = ConsumerKey
+                , timestamp            = Timestamp
+                , nonce                = Nonce
+
+                , client_shared_secret = ClientSharedSecret
+                ,  token_shared_secret = none
+
+                , token                = none
+                , verifier             = none
+                , callback             = {some, ClientCallbackURI}
+                },
+            SigComputed       = oauth1_signature:cons(SigArgs),
+            SigComputedDigest = oauth1_signature:get_digest(SigComputed),
+            case SigGiven =:= SigComputedDigest
+            of  false ->
+                    {error, {unauthorized, signature_invalid}}
+            ;   true  ->
+                    case oauth1_nonce:fetch(Nonce)
+                    of  {ok, ok} ->
+                            {error, {unauthorized, nonce_used}}
+                    ;   {error, not_found} ->
+                            Token = oauth1_credentials:generate(tmp),
+                            case oauth1_credentials:store(Token)
+                            of  {error, _}=Error ->
+                                    Error
+                            ;   {ok, ok} ->
+                                    TokenID = oauth1_credentials:get_id(Token),
+                                    IsCallbackConfirmed = false,
+                                    {ok, {TokenID, IsCallbackConfirmed}}
+                            end
+                    ;   {error, _}=Error ->
+                            Error
+                    end
+            end
+    end.
 
 %% @doc Owner authorizes the client's temporary token and, in return, gets the
 %% uri of the client "ready" callback with the tmp token and a verifier query

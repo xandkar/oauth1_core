@@ -1,7 +1,7 @@
 -record(oauth1_server_args_initiate,
-    { realm               :: oauth1_resource:realm()
+    { resource            :: oauth1_resource:t()
     , consumer_key        :: oauth1_credentials:id(client)
-    , signature           :: oauth1_signature:digest()
+    , signature           :: binary()
     , signature_method    :: oauth1_signature:method()
     , timestamp           :: oauth1_timestamp:t()
     , nonce               :: oauth1_nonce:t()
@@ -9,6 +9,8 @@
     % Client "ready" callback URI that will be called by the resource owner
     % with the temporary token and a verifier, after "authorize" step:
     , client_callback_uri :: oauth1_uri:t()
+
+    , host                :: binary()
     }).
 
 -record(oauth1_server_args_token,
