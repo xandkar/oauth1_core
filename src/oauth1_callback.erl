@@ -7,7 +7,7 @@
 
 -export(
     [ cons/2
-    , set_token_and_verifier/3
+    , set_verifier/2
     , get_uri/1
     , store/1
     , fetch/1
@@ -28,10 +28,10 @@
 
 -spec cons(oauth1_credentials:id(tmp), oauth1_uri:t()) ->
     t().
-cons({tmp, <<Token/binary>>}, Uri) ->
+cons({tmp, <<TokenBin/binary>>}=Token, URI) ->
     #t
     { token = Token
-    , uri   = Uri
+    , uri   = oauth1_uri:add_query(URI, <<"oauth_token">>, TokenBin)
     }.
 
 -spec get_uri(t()) ->
@@ -39,25 +39,16 @@ cons({tmp, <<Token/binary>>}, Uri) ->
 get_uri(#t{uri=URI}) ->
     URI.
 
--spec set_token_and_verifier(t(), Token, Verifier) ->
-    t()
-    when Token    :: oauth1_credentials:id(tmp)
-       , Verifier :: oauth1_verifier:t()
-       .
-set_token_and_verifier( #t{uri=Uri1}=T
-                      , {tmp, <<Token/binary>>}
-                      , <<Verifier/binary>>
-                      ) ->
-    QueryParams =
-        [ {<<"oauth_token">>    , Token}
-        , {<<"oauth_verifier">> , Verifier}
-        ],
-    Uri2 = oauth1_uri:set_query(Uri1, QueryParams),
+-spec set_verifier(t(), oauth1_verifier:t()) ->
+    t().
+set_verifier(#t{uri=Uri1}=T, Verifier) ->
+    VerifierBin = oauth1_verifier:get_value(Verifier),
+    Uri2 = oauth1_uri:add_query(Uri1, <<"oauth_verifier">>, VerifierBin),
     T#t{uri=Uri2}.
 
 -spec store(t()) ->
     hope_result:t(ok, oauth1_storage:error()).
-store(#t{token = <<Token/binary>>, uri=Uri}) ->
+store(#t{token = {tmp, <<Token/binary>>}, uri=Uri}) ->
     Key   = Token,
     Value = oauth1_uri:to_bin(Uri),
     oauth1_storage:put(?STORAGE_BUCKET_NAME, Key, Value).
@@ -65,13 +56,13 @@ store(#t{token = <<Token/binary>>, uri=Uri}) ->
 -spec fetch(binary()) ->
     hope_result:t(t(), oauth1_storage:error()).
 fetch(<<Token/binary>>) ->
-    case oauth1_storage:get()
+    case oauth1_storage:get(?STORAGE_BUCKET_NAME, Token)
     of  {error, _}=Error ->
             Error
     ;   {ok, UriBin} ->
             {ok, Uri} = oauth1_uri:of_bin(UriBin),
             T = #t
-                { token = Token
+                { token = {tmp, Token}
                 , uri   = Uri
                 },
             {ok, T}
