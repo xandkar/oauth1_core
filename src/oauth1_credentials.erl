@@ -30,34 +30,35 @@
     {CredentialsType, oauth1_uuid:t()}.
 
 -record(t,
-    { type   :: credentials_type()
-    , id     :: id(credentials_type())
+    { id     :: id(credentials_type())
     , secret :: secret(credentials_type())
     }).
 
 %% t() is really meant to be opaque, but alas - Dialyzer does not (yet) support
 %% polymorphic opaque types :(
 -type t(CredentialsType) ::
-    #t{type :: CredentialsType}.
+    #t
+    { id     ::     id(CredentialsType)
+    , secret :: secret(CredentialsType)
+    }.
 
 
 -spec generate(credentials_type()) ->
     t(credentials_type()).
 generate(Type) ->
     #t
-    { type   = Type
-    , id     = {Type, oauth1_uuid:generate()}
+    { id     = {Type, oauth1_uuid:generate()}
     , secret = {Type, oauth1_uuid:generate()}
     }.
 
 -spec get_id(t(credentials_type())) ->
     id(credentials_type()).
-get_id(#t{type=Type, id={Type, _}=ID, secret={Type, _}}) ->
+get_id(#t{id={Type, _}=ID, secret={Type, _}}) ->
     ID.
 
 -spec get_secret(t(credentials_type())) ->
     secret(credentials_type()).
-get_secret(#t{type=Type, id={Type, _}, secret={Type, _}=Secret}) ->
+get_secret(#t{id={Type, _}, secret={Type, _}=Secret}) ->
     Secret.
 
 -spec id_to_bin(id(credentials_type())) ->
@@ -67,7 +68,7 @@ id_to_bin({_, ID}) ->
 
 -spec store(t(credentials_type())) ->
     hope_result:t(ok, oauth1_storage:error()).
-store(#t{type=Type, id={Type, Key}, secret={Type, Value}}) ->
+store(#t{id={Type, Key}, secret={Type, Value}}) ->
     Bucket = type_to_bucket_name(Type),
     oauth1_storage:put(Bucket, Key, Value).
 
@@ -80,8 +81,7 @@ fetch({Type, <<ID/binary>>}) ->
             Error
     ;   {ok, Secret} ->
             T = #t
-                { type   = Type
-                , id     = {Type, ID}
+                { id     = {Type, ID}
                 , secret = {Type, Secret}
                 },
             {ok, T}
