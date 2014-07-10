@@ -6,6 +6,9 @@
   , {applications ,
       [ kernel
       , stdlib
+      , hope
+      , uuid
+      , cowlib
       ]}
   , {env,
       [ {storage_module , oauth1_storage_ets}
