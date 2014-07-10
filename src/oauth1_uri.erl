@@ -9,8 +9,8 @@
 
 -export(
     [ cons/1
-    , get_path_and_query/1
     , get_query/1
+    , set_query/2
     , to_bin/1
     , of_bin/1
     ]).
@@ -29,7 +29,6 @@
     , user = none    :: hope_option:t(binary())
     , host           :: binary()
     , port           :: integer()
-    , path_and_query :: binary()
     , path           :: binary()
     , query     = [] :: query()
     }).
@@ -48,7 +47,6 @@ cons(#oauth1_uri_args_cons
     , user           = User
     , host           = Host
     , port           = Port
-    , path_and_query = PathAndQuery
     , path           = Path
     , query          = Query
     }
@@ -58,20 +56,19 @@ cons(#oauth1_uri_args_cons
     , user           = User
     , host           = Host
     , port           = Port
-    , path_and_query = PathAndQuery
     , path           = Path
     , query          = Query
     }.
-
--spec get_path_and_query(t()) ->
-    binary().
-get_path_and_query(#t{path_and_query=PathAndQuery}) ->
-    PathAndQuery.
 
 -spec get_query(t()) ->
     query().
 get_query(#t{query=Query}) ->
     Query.
+
+-spec set_query(t(), query()) ->
+    t().
+set_query(#t{}=T, QueryParams) ->
+    T#t{query=QueryParams}.
 
 -spec to_bin(t()) ->
     binary().
@@ -80,8 +77,8 @@ to_bin(#t
     , user           = User
     , host           = Host
     , port           = Port
-    , path_and_query = PathAndQuery
-    , query          = _Query
+    , path           = Path
+    , query          = Query
     }
 ) ->
     UserOrEmpty =
@@ -98,12 +95,15 @@ to_bin(#t
                 <<":", PortBin/binary>>
         end,
     SchemeBin = scheme_to_bin(Scheme),
+    QueryBin  = cow_qs:qs(Query),
     << SchemeBin/binary
     ,  "://"
     ,  UserOrEmpty/binary
     ,  Host/binary
     ,  PortOrEmpty/binary
-    ,  PathAndQuery/binary
+    ,  Path/binary
+    , "?"
+    ,  QueryBin/binary
     >>.
 
 -spec of_bin(binary()) ->
@@ -127,7 +127,6 @@ of_bin(<<URIString/binary>>) ->
                 , user           = UserInfoOpt
                 , host           = HostBin
                 , port           = Port
-                , path_and_query = <<PathBin/binary, QueryBin/binary>>
                 , path           = PathBin
                 , query          = cow_qs:parse_qs(QueryBin)
                 },
