@@ -116,12 +116,12 @@ of_bin(<<URIString/binary>>) ->
         when Scheme =:= http orelse Scheme =:= https ->
             UserInfoOpt =
                 case UserInfo
-                of  [] -> none
+                of  []    -> none
                 ;   [_|_] -> {some, list_to_binary(UserInfo)}
                 end,
-            HostBin      = list_to_binary(Host),
-            PathBin      = list_to_binary(Path),
-            QueryBin     = list_to_binary(Query),
+            HostBin  = list_to_binary(Host),
+            PathBin  = list_to_binary(Path),
+            QueryBin = list_to_binary(Query),
             T = #t
                 { scheme         = Scheme
                 , user           = UserInfoOpt
