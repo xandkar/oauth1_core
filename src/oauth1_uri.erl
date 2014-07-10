@@ -102,7 +102,7 @@ to_bin(#t
     ,  Host/binary
     ,  PortOrEmpty/binary
     ,  Path/binary
-    , "?"
+    ,  "?"
     ,  QueryBin/binary
     >>.
 
