@@ -47,10 +47,11 @@ fetch({tmp, <<Token/binary>>}=TempToken) ->
     of  {error, _}=Error ->
             Error
     ;   {ok, Verifier} ->
-            #t
-            { temp_token = TempToken
-            , verifier   = Verifier
-            }
+            T = #t
+                { temp_token = TempToken
+                , verifier   = Verifier
+                },
+            {ok, T}
     end.
 
 
