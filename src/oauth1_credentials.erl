@@ -79,11 +79,12 @@ fetch({Type, <<ID/binary>>}) ->
     of  {error, _}=Error ->
             Error
     ;   {ok, Secret} ->
-            #t
-            { type   = Type
-            , id     = {Type, ID}
-            , secret = {Type, Secret}
-            }
+            T = #t
+                { type   = Type
+                , id     = {Type, ID}
+                , secret = {Type, Secret}
+                },
+            {ok, T}
     end.
 
 
