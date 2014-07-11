@@ -5,7 +5,6 @@
 
 -export_type(
     [ error/0
-    , authorization_verifier/0
     , args_initiate/0
     , args_token/0
     , args_validate_resource_request/0
@@ -39,9 +38,6 @@
       {bad_request  , error_bad_request()}
     | {unauthorized , error_unauthorized()}
     .
-
--type authorization_verifier() ::
-    boolean().
 
 -type args_initiate() ::
     #oauth1_server_args_initiate{}.
@@ -159,10 +155,38 @@ initiate(#oauth1_server_args_initiate
 %% uri of the client "ready" callback with the tmp token and a verifier query
 %% params.
 %% @end
--spec authorize(oauth1_credentials:id(tmp)) ->
-    oauth1_uri:t().
-authorize(_TempCreds) ->
-    ?not_implemented.
+-spec authorize(TmpToken :: binary()) ->
+    hope_result:t(Ok, Error)
+    when Ok    :: oauth1_uri:t()
+       , Error :: oauth1_storage:error()
+                | error()
+       .
+authorize(<<TmpTokenID/binary>>) ->
+    TmpToken = {tmp, TmpTokenID},
+    case oauth1_credentials:fetch(TmpToken)
+    of  {error, not_found} ->
+            {error, {unauthorized, token_invalid}}
+    ;   {error, _}=Error ->
+            Error
+    ;   {ok, _TmpCredentials} ->
+            case oauth1_callback:fetch(TmpTokenID)
+            of  {error, not_found} ->
+                    error("No callback found for a valid tmp token!")
+            ;   {error, _}=Error ->
+                    Error
+            ;   {ok, Callback1} ->
+                    Verifier = oauth1_verifier:generate(TmpToken),
+                    case oauth1_verifier:store(Verifier)
+                    of  {error, _}=Error ->
+                            Error
+                    ;   {ok, ok} ->
+                            Callback2 = oauth1_callback:set_verifier( Callback1
+                                                                    , Verifier
+                                                                    ),
+                            oauth1_callback:get_uri(Callback2)
+                    end
+            end
+    end.
 
 %% @doc Grant the real access token.
 %% @end
