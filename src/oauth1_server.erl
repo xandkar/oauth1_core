@@ -30,6 +30,7 @@
     | client_credentials_invalid
     | token_invalid
     | token_expired
+    | verifier_invalid
     | nonce_invalid
     | nonce_used
     .
@@ -89,6 +90,7 @@ initiate(#oauth1_server_args_initiate
     , nonce               = Nonce
 
     , client_callback_uri = CallbackURI
+
     , host                = Host
     }
 ) ->
@@ -197,17 +199,82 @@ authorize(<<TmpTokenID/binary>>) ->
                 | error()
        .
 token(#oauth1_server_args_token
-    { realm            = _Realm
-    , consumer_key     = _ConsumerKey
-    , signature        = _Signature
-    , signature_method = _SignatureMethod
-    , timestamp        = _Timestamp
-    , nonce            = _Nonce
-    , temp_token       = _TempToken
-    , verifier         = _Verifier
+    { resource         = Resource
+    , consumer_key     = {client, <<_/binary>>}=ConsumerKey
+    , signature        = <<SigGiven/binary>>
+    , signature_method = SigMethod = 'HMAC_SHA1'
+    , timestamp        = Timestamp
+    , nonce            = Nonce
+
+    , temp_token       = {tmp, <<_/binary>>}=TmpToken
+    , verifier         = <<VerifierGivenBin/binary>>
+
+    , host             = Host
     }
 ) ->
-    ?not_implemented.
+    case oauth1_credentials:fetch(ConsumerKey)
+    of  {error, not_found} ->
+            {error, {unauthorized, client_credentials_invalid}}
+    ;   {error, _}=Error ->
+            Error
+    ;   {ok, ClientCredentials} ->
+            case oauth1_credentials:fetch(TmpToken)
+            of  {error, not_found} ->
+                    {error, {unauthorized, token_invalid}}
+            ;   {ok, TmpTokenCredentials} ->
+                    case oauth1_verifier:fetch(TmpToken)
+                    of  {error, not_found} ->
+                            {error, {unauthorized, verifier_invalid}}
+                    ;   {ok, Verifier} ->
+                            VerifierBin = oauth1_verifier:get_value(Verifier),
+                            case VerifierGivenBin =:= VerifierBin
+                            of  false ->
+                                    {error, {unauthorized, verifier_invalid}}
+                            ;   true ->
+                                    TmpTokenSharedSecret =
+                                        oauth1_credentials:get_secret(TmpTokenCredentials),
+                                    ClientSharedSecret =
+                                        oauth1_credentials:get_secret(ClientCredentials),
+                                    SigArgs =
+                                        #oauth1_signature_args_cons
+                                        { method               = SigMethod
+                                        , http_req_method      = <<"POST">>
+                                        , http_req_host        = Host
+                                        , resource             = Resource
+                                        , consumer_key         = ConsumerKey
+                                        , timestamp            = Timestamp
+                                        , nonce                = Nonce
+
+                                        , client_shared_secret =          ClientSharedSecret
+                                        ,  token_shared_secret = {some, TmpTokenSharedSecret}
+
+                                        , token                = {some, TmpToken}
+                                        , verifier             = {some, Verifier}
+                                        , callback             = none
+                                        },
+                                    SigComputed       = oauth1_signature:cons(SigArgs),
+                                    SigComputedDigest = oauth1_signature:get_digest(SigComputed),
+                                    case SigGiven =:= SigComputedDigest
+                                    of  false ->
+                                            {error, {unauthorized, signature_invalid}}
+                                    ;   true  ->
+                                            case oauth1_nonce:fetch(Nonce)
+                                            of  {ok, ok} ->
+                                                    {error, {unauthorized, nonce_used}}
+                                            ;   {error, not_found} ->
+                                                    Token = oauth1_credentials:generate(token),
+                                                    case oauth1_credentials:store(Token)
+                                                    of  {error, _}=Error ->
+                                                            Error
+                                                    ;   {ok, ok} ->
+                                                            {ok, Token}
+                                                    end
+                                            end
+                                    end
+                            end
+                    end
+            end
+    end.
 
 -spec validate_resource_request(args_validate_resource_request()) ->
     hope_result:t(ok, Error)
