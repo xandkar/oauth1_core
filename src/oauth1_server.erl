@@ -169,7 +169,7 @@ authorize(<<TmpTokenID/binary>>) ->
     ;   {error, _}=Error ->
             Error
     ;   {ok, _TmpCredentials} ->
-            case oauth1_callback:fetch(TmpTokenID)
+            case oauth1_callback:fetch(TmpToken)
             of  {error, not_found} ->
                     error("No callback found for a valid tmp token!")
             ;   {error, _}=Error ->

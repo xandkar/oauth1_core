@@ -53,9 +53,9 @@ store(#t{token = {tmp, <<Token/binary>>}, uri=Uri}) ->
     Value = oauth1_uri:to_bin(Uri),
     oauth1_storage:put(?STORAGE_BUCKET_NAME, Key, Value).
 
--spec fetch(binary()) ->
+-spec fetch(oauth1_credentials:id(tmp)) ->
     hope_result:t(t(), oauth1_storage:error()).
-fetch(<<Token/binary>>) ->
+fetch({tmp, <<Token/binary>>}) ->
     case oauth1_storage:get(?STORAGE_BUCKET_NAME, Token)
     of  {error, _}=Error ->
             Error
