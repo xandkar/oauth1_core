@@ -12,6 +12,7 @@
     , get_uri/1
     ]).
 
+
 -type realm() ::
     binary().
 
@@ -25,6 +26,7 @@
 
 -opaque t() ::
     #t{}.
+
 
 -spec cons(realm(), uri()) ->
     t().
