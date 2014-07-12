@@ -271,10 +271,12 @@ token(#oauth1_server_args_token
         , make_validate_nonce(Nonce)
         , make_issue_token(token)
         ],
-    State1 = #request_validation_state{},
-    State2 = hope_result:pipe(Steps, State1),
-    {some, Token} = State2#request_validation_state.result,
-    Token.
+    case hope_result:pipe(Steps, #request_validation_state{})
+    of  {error, _}=Error ->
+            Error
+    ;   {ok, #request_validation_state{result={some, Token}}} ->
+            {ok, Token}
+    end.
 
 -spec validate_resource_request(args_validate_resource_request()) ->
     hope_result:t(ok, Error)
