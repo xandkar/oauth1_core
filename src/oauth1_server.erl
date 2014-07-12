@@ -49,6 +49,14 @@
 -type args_validate_resource_request() ::
     #oauth1_server_args_validate_resource_request{}.
 
+-record(request_validation_state,
+    { creds_client = none :: hope_option:t(oauth1_credentials:t(client))
+    , creds_tmp    = none :: hope_option:t(oauth1_credentials:t(tmp))
+    , verifier     = none :: hope_option:t(oauth1_verifier:t())
+
+    , result       = none :: hope_option:t(term())
+    }).
+
 
 -define(not_implemented, error(not_implemented)).
 
@@ -212,69 +220,120 @@ token(#oauth1_server_args_token
     , host             = Host
     }
 ) ->
-    case oauth1_credentials:fetch(ConsumerKey)
-    of  {error, not_found} ->
-            {error, {unauthorized, client_credentials_invalid}}
-    ;   {error, _}=Error ->
-            Error
-    ;   {ok, ClientCredentials} ->
+    ValidateConsumerKey =
+        fun (#request_validation_state{}=State1) ->
+            case oauth1_credentials:fetch(ConsumerKey)
+            of  {error, not_found} ->
+                    {error, {unauthorized, client_credentials_invalid}}
+            ;   {error, _}=Error ->
+                    Error
+            ;   {ok, ClientCredentials} ->
+                    State2 =
+                        State1#request_validation_state
+                        { creds_client = {some, ClientCredentials}
+                        },
+                    {ok, State2}
+            end
+        end,
+    ValidateTmpToken =
+        fun (#request_validation_state{}=State1) ->
             case oauth1_credentials:fetch(TmpToken)
             of  {error, not_found} ->
                     {error, {unauthorized, token_invalid}}
             ;   {ok, TmpTokenCredentials} ->
-                    case oauth1_verifier:fetch(TmpToken)
-                    of  {error, not_found} ->
+                    State2 =
+                        State1#request_validation_state
+                        { creds_tmp = {some, TmpTokenCredentials}
+                        },
+                    {ok, State2}
+            end
+        end,
+    ValidateVerifier =
+        fun (#request_validation_state{}=State1) ->
+            case oauth1_verifier:fetch(TmpToken)
+            of  {error, not_found} ->
+                    {error, {unauthorized, verifier_invalid}}
+            ;   {ok, Verifier} ->
+                    VerifierBin = oauth1_verifier:get_value(Verifier),
+                    case VerifierGivenBin =:= VerifierBin
+                    of  false ->
                             {error, {unauthorized, verifier_invalid}}
-                    ;   {ok, Verifier} ->
-                            VerifierBin = oauth1_verifier:get_value(Verifier),
-                            case VerifierGivenBin =:= VerifierBin
-                            of  false ->
-                                    {error, {unauthorized, verifier_invalid}}
-                            ;   true ->
-                                    TmpTokenSharedSecret =
-                                        oauth1_credentials:get_secret(TmpTokenCredentials),
-                                    ClientSharedSecret =
-                                        oauth1_credentials:get_secret(ClientCredentials),
-                                    SigArgs =
-                                        #oauth1_signature_args_cons
-                                        { method               = SigMethod
-                                        , http_req_method      = <<"POST">>
-                                        , http_req_host        = Host
-                                        , resource             = Resource
-                                        , consumer_key         = ConsumerKey
-                                        , timestamp            = Timestamp
-                                        , nonce                = Nonce
-
-                                        , client_shared_secret =          ClientSharedSecret
-                                        ,  token_shared_secret = {some, TmpTokenSharedSecret}
-
-                                        , token                = {some, TmpToken}
-                                        , verifier             = {some, Verifier}
-                                        , callback             = none
-                                        },
-                                    SigComputed       = oauth1_signature:cons(SigArgs),
-                                    SigComputedDigest = oauth1_signature:get_digest(SigComputed),
-                                    case SigGiven =:= SigComputedDigest
-                                    of  false ->
-                                            {error, {unauthorized, signature_invalid}}
-                                    ;   true  ->
-                                            case oauth1_nonce:fetch(Nonce)
-                                            of  {ok, ok} ->
-                                                    {error, {unauthorized, nonce_used}}
-                                            ;   {error, not_found} ->
-                                                    Token = oauth1_credentials:generate(token),
-                                                    case oauth1_credentials:store(Token)
-                                                    of  {error, _}=Error ->
-                                                            Error
-                                                    ;   {ok, ok} ->
-                                                            {ok, Token}
-                                                    end
-                                            end
-                                    end
-                            end
+                    ;   true ->
+                            State2 =
+                                State1#request_validation_state
+                                { verifier = {some, Verifier}
+                                },
+                            {ok, State2}
                     end
             end
-    end.
+        end,
+    ValidateSignature =
+        fun (#request_validation_state
+            { creds_client = {some, ClientCredentials}
+            , creds_tmp    = {some, TmpTokenCredentials}
+            , verifier     = {some, Verifier}
+            }=State) ->
+            TmpTokenSharedSecret =
+                oauth1_credentials:get_secret(TmpTokenCredentials),
+            ClientSharedSecret =
+                oauth1_credentials:get_secret(ClientCredentials),
+            SigArgs =
+                #oauth1_signature_args_cons
+                { method               = SigMethod
+                , http_req_method      = <<"POST">>
+                , http_req_host        = Host
+                , resource             = Resource
+                , consumer_key         = ConsumerKey
+                , timestamp            = Timestamp
+                , nonce                = Nonce
+
+                , client_shared_secret =          ClientSharedSecret
+                ,  token_shared_secret = {some, TmpTokenSharedSecret}
+
+                , token                = {some, TmpToken}
+                , verifier             = {some, Verifier}
+                , callback             = none
+                },
+            SigComputed       = oauth1_signature:cons(SigArgs),
+            SigComputedDigest = oauth1_signature:get_digest(SigComputed),
+            case SigGiven =:= SigComputedDigest
+            of  false -> {error, {unauthorized, signature_invalid}}
+            ;   true  -> {ok, State}
+            end
+        end,
+    ValidateNonce =
+        fun (#request_validation_state{}=State) ->
+            case oauth1_nonce:fetch(Nonce)
+            of  {ok, ok}           -> {error, {unauthorized, nonce_used}}
+            ;   {error, not_found} -> {ok, State}
+            end
+        end,
+    IssueToken =
+        fun (#request_validation_state{}=State1) ->
+            Token = oauth1_credentials:generate(token),
+            case oauth1_credentials:store(Token)
+            of  {error, _}=Error ->
+                    Error
+            ;   {ok, ok} ->
+                    State2 =
+                        State1#request_validation_state
+                        { result = {some, Token}
+                        },
+                    {ok, State2}
+            end
+        end,
+    Steps =
+        [ ValidateConsumerKey
+        , ValidateTmpToken
+        , ValidateVerifier
+        , ValidateSignature
+        , ValidateNonce
+        , IssueToken
+        ],
+    State1 = #request_validation_state{},
+    State2 = hope_result:pipe(Steps, State1),
+    {some, Token} = State2#request_validation_state.result,
+    Token.
 
 -spec validate_resource_request(args_validate_resource_request()) ->
     hope_result:t(ok, Error)
