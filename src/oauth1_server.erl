@@ -54,8 +54,21 @@
     , creds_tmp_tok= none :: hope_option:t(oauth1_credentials:t(tmp))
     , verifier     = none :: hope_option:t(oauth1_verifier:t())
 
-    , result       = none :: hope_option:t(term())
+    , result       = none :: hope_option:t(any())
     }).
+
+-type request_validation_state(A) ::
+    #request_validation_state
+    { result :: A
+    }.
+
+-type request_validator(A) ::
+    fun((request_validation_state(A)) ->
+            hope_result:t( request_validation_state(A)
+                         , oauth1_storage:error()
+                         | error()
+                         )
+    ).
 
 
 -define(not_implemented, error(not_implemented)).
@@ -219,53 +232,6 @@ token(#oauth1_server_args_token
     , host             = Host
     }
 ) ->
-    ValidateConsumerKey =
-        fun (#request_validation_state{}=State1) ->
-            case oauth1_credentials:fetch(ConsumerKey)
-            of  {error, not_found} ->
-                    {error, {unauthorized, client_credentials_invalid}}
-            ;   {error, _}=Error ->
-                    Error
-            ;   {ok, ClientCredentials} ->
-                    State2 =
-                        State1#request_validation_state
-                        { creds_client = {some, ClientCredentials}
-                        },
-                    {ok, State2}
-            end
-        end,
-    ValidateTmpToken =
-        fun (#request_validation_state{}=State1) ->
-            case oauth1_credentials:fetch(TmpTokenID)
-            of  {error, not_found} ->
-                    {error, {unauthorized, token_invalid}}
-            ;   {ok, TmpToken} ->
-                    State2 =
-                        State1#request_validation_state
-                        { creds_tmp_tok = {some, TmpToken}
-                        },
-                    {ok, State2}
-            end
-        end,
-    ValidateVerifier =
-        fun (#request_validation_state{}=State1) ->
-            case oauth1_verifier:fetch(TmpTokenID)
-            of  {error, not_found} ->
-                    {error, {unauthorized, verifier_invalid}}
-            ;   {ok, Verifier} ->
-                    VerifierBin = oauth1_verifier:get_value(Verifier),
-                    case VerifierGivenBin =:= VerifierBin
-                    of  false ->
-                            {error, {unauthorized, verifier_invalid}}
-                    ;   true ->
-                            State2 =
-                                State1#request_validation_state
-                                { verifier = {some, Verifier}
-                                },
-                            {ok, State2}
-                    end
-            end
-        end,
     ValidateSignature =
         fun (#request_validation_state
             { creds_client = {some, ClientCredentials}
@@ -297,34 +263,13 @@ token(#oauth1_server_args_token
             ;   true  -> {ok, State}
             end
         end,
-    ValidateNonce =
-        fun (#request_validation_state{}=State) ->
-            case oauth1_nonce:fetch(Nonce)
-            of  {ok, ok}           -> {error, {unauthorized, nonce_used}}
-            ;   {error, not_found} -> {ok, State}
-            end
-        end,
-    IssueToken =
-        fun (#request_validation_state{}=State1) ->
-            Token = oauth1_credentials:generate(token),
-            case oauth1_credentials:store(Token)
-            of  {error, _}=Error ->
-                    Error
-            ;   {ok, ok} ->
-                    State2 =
-                        State1#request_validation_state
-                        { result = {some, Token}
-                        },
-                    {ok, State2}
-            end
-        end,
     Steps =
-        [ ValidateConsumerKey
-        , ValidateTmpToken
-        , ValidateVerifier
+        [ make_validate_consumer_key(ConsumerKey)
+        , make_validate_tmp_token(TmpTokenID)
+        , make_validate_verifier(VerifierGivenBin, TmpTokenID)
         , ValidateSignature
-        , ValidateNonce
-        , IssueToken
+        , make_validate_nonce(Nonce)
+        , make_issue_token()
         ],
     State1 = #request_validation_state{},
     State2 = hope_result:pipe(Steps, State1),
@@ -347,3 +292,88 @@ validate_resource_request(#oauth1_server_args_validate_resource_request
     }
 ) ->
     ?not_implemented.
+
+
+-spec make_validate_nonce(oauth1_nonce:t()) ->
+    request_validator(any()).
+make_validate_nonce(Nonce) ->
+    fun (#request_validation_state{}=State) ->
+        case oauth1_nonce:fetch(Nonce)
+        of  {ok, ok}           -> {error, {unauthorized, nonce_used}}
+        ;   {error, not_found} -> {ok, State}
+        end
+    end.
+
+-spec make_validate_consumer_key(oauth1_credentials:id(client)) ->
+    request_validator(any()).
+make_validate_consumer_key(ConsumerKey) ->
+    fun (#request_validation_state{}=State1) ->
+        case oauth1_credentials:fetch(ConsumerKey)
+        of  {error, not_found} ->
+                {error, {unauthorized, client_credentials_invalid}}
+        ;   {error, _}=Error ->
+                Error
+        ;   {ok, ClientCredentials} ->
+                State2 =
+                    State1#request_validation_state
+                    { creds_client = {some, ClientCredentials}
+                    },
+                {ok, State2}
+        end
+    end.
+
+-spec make_validate_tmp_token(oauth1_credentials:id(tmp)) ->
+    request_validator(any()).
+make_validate_tmp_token(TmpTokenID) ->
+    fun (#request_validation_state{}=State1) ->
+        case oauth1_credentials:fetch(TmpTokenID)
+        of  {error, not_found} ->
+                {error, {unauthorized, token_invalid}}
+        ;   {ok, TmpToken} ->
+                State2 =
+                    State1#request_validation_state
+                    { creds_tmp_tok = {some, TmpToken}
+                    },
+                {ok, State2}
+        end
+    end.
+
+-spec make_validate_verifier(binary(), oauth1_credentials:id(tmp)) ->
+    request_validator(any()).
+make_validate_verifier(VerifierGivenBin, TmpTokenID) ->
+    fun (#request_validation_state{}=State1) ->
+        case oauth1_verifier:fetch(TmpTokenID)
+        of  {error, not_found} ->
+                {error, {unauthorized, verifier_invalid}}
+        ;   {ok, Verifier} ->
+                VerifierBin = oauth1_verifier:get_value(Verifier),
+                case VerifierGivenBin =:= VerifierBin
+                of  false ->
+                        {error, {unauthorized, verifier_invalid}}
+                ;   true ->
+                        State2 =
+                            State1#request_validation_state
+                            { verifier = {some, Verifier}
+                            },
+                        {ok, State2}
+                end
+        end
+    end.
+
+-spec make_issue_token() ->
+    request_validator(hope_option:t(Token))
+    when Token :: oauth1_credentials:t(token).
+make_issue_token() ->
+    fun (#request_validation_state{}=State1) ->
+        Token = oauth1_credentials:generate(token),
+        case oauth1_credentials:store(Token)
+        of  {error, _}=Error ->
+                Error
+        ;   {ok, ok} ->
+                State2 =
+                    State1#request_validation_state
+                    { result = {some, Token}
+                    },
+                {ok, State2}
+        end
+    end.
