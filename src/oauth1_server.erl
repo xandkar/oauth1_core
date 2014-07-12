@@ -269,7 +269,7 @@ token(#oauth1_server_args_token
         , make_validate_verifier(VerifierGivenBin, TmpTokenID)
         , ValidateSignature
         , make_validate_nonce(Nonce)
-        , make_issue_token()
+        , make_issue_token(token)
         ],
     State1 = #request_validation_state{},
     State2 = hope_result:pipe(Steps, State1),
@@ -360,12 +360,14 @@ make_validate_verifier(VerifierGivenBin, TmpTokenID) ->
         end
     end.
 
--spec make_issue_token() ->
+-spec make_issue_token(Type) ->
     request_validator(hope_option:t(Token))
-    when Token :: oauth1_credentials:t(token).
-make_issue_token() ->
+    when Token :: oauth1_credentials:t(Type)
+       , Type  :: tmp | token
+       .
+make_issue_token(Type) when Type =:= tmp orelse Type =:= token ->
     fun (#request_validation_state{}=State1) ->
-        Token = oauth1_credentials:generate(token),
+        Token = oauth1_credentials:generate(Type),
         case oauth1_credentials:store(Token)
         of  {error, _}=Error ->
                 Error
