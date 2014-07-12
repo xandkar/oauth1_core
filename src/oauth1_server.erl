@@ -59,7 +59,7 @@
 
 -type request_validation_state(A) ::
     #request_validation_state
-    { result :: A
+    { result :: hope_option:t(A)
     }.
 
 -type request_validator(A) ::
@@ -361,7 +361,7 @@ make_validate_verifier(VerifierGivenBin, TmpTokenID) ->
     end.
 
 -spec make_issue_token(Type) ->
-    request_validator(hope_option:t(Token))
+    request_validator(Token)
     when Token :: oauth1_credentials:t(Type)
        , Type  :: tmp | token
        .
