@@ -51,7 +51,7 @@
 
 -record(request_validation_state,
     { creds_client = none :: hope_option:t(oauth1_credentials:t(client))
-    , creds_tmp    = none :: hope_option:t(oauth1_credentials:t(tmp))
+    , creds_tmp_tok= none :: hope_option:t(oauth1_credentials:t(tmp))
     , verifier     = none :: hope_option:t(oauth1_verifier:t())
 
     , result       = none :: hope_option:t(term())
@@ -213,7 +213,7 @@ token(#oauth1_server_args_token
     , timestamp        = Timestamp
     , nonce            = Nonce
 
-    , temp_token       = {tmp, <<_/binary>>}=TmpToken
+    , temp_token       = {tmp, <<_/binary>>}=TmpTokenID
     , verifier         = <<VerifierGivenBin/binary>>
 
     , host             = Host
@@ -236,20 +236,20 @@ token(#oauth1_server_args_token
         end,
     ValidateTmpToken =
         fun (#request_validation_state{}=State1) ->
-            case oauth1_credentials:fetch(TmpToken)
+            case oauth1_credentials:fetch(TmpTokenID)
             of  {error, not_found} ->
                     {error, {unauthorized, token_invalid}}
-            ;   {ok, TmpTokenCredentials} ->
+            ;   {ok, TmpToken} ->
                     State2 =
                         State1#request_validation_state
-                        { creds_tmp = {some, TmpTokenCredentials}
+                        { creds_tmp_tok = {some, TmpToken}
                         },
                     {ok, State2}
             end
         end,
     ValidateVerifier =
         fun (#request_validation_state{}=State1) ->
-            case oauth1_verifier:fetch(TmpToken)
+            case oauth1_verifier:fetch(TmpTokenID)
             of  {error, not_found} ->
                     {error, {unauthorized, verifier_invalid}}
             ;   {ok, Verifier} ->
@@ -269,7 +269,7 @@ token(#oauth1_server_args_token
     ValidateSignature =
         fun (#request_validation_state
             { creds_client = {some, ClientCredentials}
-            , creds_tmp    = {some, TmpTokenCredentials}
+            , creds_tmp_tok= {some, TmpToken}
             , verifier     = {some, Verifier}
             }=State) ->
             ClientSharedSecret =
@@ -286,7 +286,7 @@ token(#oauth1_server_args_token
 
                 , client_shared_secret = ClientSharedSecret
 
-                , token                = {some, TmpTokenCredentials}
+                , token                = {some, TmpToken}
                 , verifier             = {some, Verifier}
                 , callback             = none
                 },
