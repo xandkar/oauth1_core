@@ -32,7 +32,7 @@ cons(#oauth1_signature_base_string_args_cons
     , timestamp            = Timestamp
     , nonce                = Nonce
 
-    , token                = TokenOpt
+    , token_id             = TokenIDOpt
     , verifier             = VerifierOpt
     , callback             = CallbackOpt
     }
@@ -41,7 +41,7 @@ cons(#oauth1_signature_base_string_args_cons
     URI           = oauth1_resource:get_uri(Resource),
     BaseStringURI = oauth1_signature_base_string_uri:cons(URI),
     TokenPair =
-        case TokenOpt
+        case TokenIDOpt
         of  none                      -> []
         ;   {some, {tmp  , TokenBin}} -> [{<<"oauth_token">>, TokenBin}]
         ;   {some, {token, TokenBin}} -> [{<<"oauth_token">>, TokenBin}]

@@ -45,13 +45,21 @@ cons(#oauth1_signature_args_cons
     , nonce                = Nonce
 
     , client_shared_secret = ClientSharedSecret
-    ,  token_shared_secret =  TokenSharedSecretOpt
 
     , token                = TokenOpt
     , verifier             = VerifierOpt
     , callback             = CallbackURIOpt
     }
 ) ->
+    {TokenIDOpt, TokenSharedSecretOpt} =
+        case TokenOpt
+        of  none ->
+                {none, none}
+        ;   {some, Token} ->
+                TokenID     = oauth1_credentials:get_id(Token),
+                TokenSecret = oauth1_credentials:get_secret(Token),
+                {{some, TokenID}, {some, TokenSecret}}
+        end,
     BaseStringArgs =
         #oauth1_signature_base_string_args_cons
         { signature_method     = 'HMAC_SHA1'
@@ -62,12 +70,11 @@ cons(#oauth1_signature_args_cons
         , timestamp            = Timestamp
         , nonce                = Nonce
 
-        , token                = TokenOpt
+        , token_id             = TokenIDOpt
         , verifier             = VerifierOpt
         , callback             = CallbackURIOpt
         },
-    TokenSharedSecret = hope_option:get(TokenSharedSecretOpt, <<>>),
-    Key = oauth1_signature_key:cons(ClientSharedSecret, TokenSharedSecret),
+    Key = oauth1_signature_key:cons(ClientSharedSecret, TokenSharedSecretOpt),
     Text = oauth1_signature_base_string:cons(BaseStringArgs),
     DigestBin = crypto:hmac(sha, Key, Text),
     DigestBase64 = base64:encode(DigestBin),

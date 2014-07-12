@@ -13,12 +13,20 @@
     binary().
 
 
--spec cons(ClientSharedSecret, TokenSharedSecret) -> t()
+-spec cons(ClientSharedSecret, hope_option:t(TokenSharedSecret)) -> t()
     when ClientSharedSecret :: oauth1_credentials:secret(client)
        , TokenSharedSecret  :: oauth1_credentials:secret(tmp | token)
        .
-cons({client, <<ClientSecret/binary>>}, {Type, <<TokenSecret/binary>>})
-when   Type =:= tmp
-orelse Type =:= token ->
+cons({client, <<ClientSecret/binary>>}, TokenSecretOpt) ->
+    case TokenSecretOpt
+    of  none ->
+            concat(ClientSecret, <<>>)
+    ;   {some, {tmp  , <<TokenSecret/binary>>}} ->
+            concat(ClientSecret, TokenSecret)
+    ;   {some, {token, <<TokenSecret/binary>>}} ->
+            concat(ClientSecret, TokenSecret)
+    end.
+
+concat(<<ClientSecret/binary>>, <<TokenSecret/binary>>) ->
     % TODO: Percent-encode both secrets
     <<ClientSecret/binary, "&", TokenSecret/binary>>.

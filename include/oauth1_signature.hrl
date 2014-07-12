@@ -8,12 +8,8 @@
     , nonce                :: oauth1_nonce:t()
 
     , client_shared_secret :: oauth1_credentials:secret(client)
-    , token_shared_secret
-                    = none :: hope_option:t(oauth1_credentials:secret( tmp
-                                                                     | token
-                                                                     ))
 
-    , token         = none :: hope_option:t(oauth1_credentials:id(tmp | token))
+    , token         = none :: hope_option:t(oauth1_credentials:t(tmp | token))
     , verifier      = none :: hope_option:t(oauth1_verifier:t())
     , callback      = none :: hope_option:t(oauth1_uri:t())
     }).

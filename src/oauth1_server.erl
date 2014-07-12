@@ -121,7 +121,6 @@ initiate(#oauth1_server_args_initiate
                 , nonce                = Nonce
 
                 , client_shared_secret = ClientSharedSecret
-                ,  token_shared_secret = none
 
                 , token                = none
                 , verifier             = none
@@ -273,8 +272,6 @@ token(#oauth1_server_args_token
             , creds_tmp    = {some, TmpTokenCredentials}
             , verifier     = {some, Verifier}
             }=State) ->
-            TmpTokenSharedSecret =
-                oauth1_credentials:get_secret(TmpTokenCredentials),
             ClientSharedSecret =
                 oauth1_credentials:get_secret(ClientCredentials),
             SigArgs =
@@ -287,10 +284,9 @@ token(#oauth1_server_args_token
                 , timestamp            = Timestamp
                 , nonce                = Nonce
 
-                , client_shared_secret =          ClientSharedSecret
-                ,  token_shared_secret = {some, TmpTokenSharedSecret}
+                , client_shared_secret = ClientSharedSecret
 
-                , token                = {some, TmpToken}
+                , token                = {some, TmpTokenCredentials}
                 , verifier             = {some, Verifier}
                 , callback             = none
                 },
