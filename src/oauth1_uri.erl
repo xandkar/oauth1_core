@@ -26,12 +26,12 @@
     [{binary(), binary()}].
 
 -record(t,
-    { scheme         :: scheme()
-    , user = none    :: hope_option:t(binary())
-    , host           :: binary()
-    , port           :: integer()
-    , path           :: binary()
-    , query     = [] :: query()
+    { scheme        :: scheme()
+    , user   = none :: hope_option:t(binary())
+    , host          :: binary()
+    , port          :: integer()
+    , path          :: binary()
+    , query  = []   :: query()
     }).
 
 -opaque t() ::
@@ -44,21 +44,21 @@
 -spec cons(args_cons()) ->
     t().
 cons(#oauth1_uri_args_cons
-    { scheme         = Scheme
-    , user           = User
-    , host           = Host
-    , port           = Port
-    , path           = Path
-    , query          = Query
+    { scheme = Scheme
+    , user   = User
+    , host   = Host
+    , port   = Port
+    , path   = Path
+    , query  = Query
     }
 ) ->
     #t
-    { scheme         = Scheme
-    , user           = User
-    , host           = Host
-    , port           = Port
-    , path           = Path
-    , query          = Query
+    { scheme = Scheme
+    , user   = User
+    , host   = Host
+    , port   = Port
+    , path   = Path
+    , query  = Query
     }.
 
 -spec get_query(t()) ->
@@ -80,12 +80,12 @@ add_query(#t{query=Query1}=T, <<Key/binary>>, <<Value/binary>>) ->
 -spec to_bin(t()) ->
     binary().
 to_bin(#t
-    { scheme         = Scheme
-    , user           = User
-    , host           = Host
-    , port           = Port
-    , path           = Path
-    , query          = Query
+    { scheme = Scheme
+    , user   = User
+    , host   = Host
+    , port   = Port
+    , path   = Path
+    , query  = Query
     }
 ) ->
     UserOrEmpty =
@@ -130,12 +130,12 @@ of_bin(<<URIString/binary>>) ->
             PathBin  = list_to_binary(Path),
             QueryBin = list_to_binary(Query),
             T = #t
-                { scheme         = Scheme
-                , user           = UserInfoOpt
-                , host           = HostBin
-                , port           = Port
-                , path           = PathBin
-                , query          = cow_qs:parse_qs(QueryBin)
+                { scheme = Scheme
+                , user   = UserInfoOpt
+                , host   = HostBin
+                , port   = Port
+                , path   = PathBin
+                , query  = cow_qs:parse_qs(QueryBin)
                 },
             {ok, T}
 
