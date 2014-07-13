@@ -19,4 +19,3 @@
     t().
 of_uri(URI) ->
     oauth1_uri:get_host(URI).
-
