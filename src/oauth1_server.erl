@@ -71,9 +71,6 @@
     ).
 
 
--define(not_implemented, error(not_implemented)).
-
-
 %% @doc Generate and store a credentials pair {ClientID, ClientSecret).
 %% @end
 -spec register_new_client() ->
