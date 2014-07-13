@@ -31,11 +31,13 @@
     }).
 
 -record(oauth1_server_args_validate_resource_request,
-    { realm            :: oauth1_resource:realm()
+    { resource         :: oauth1_resource:t()
     , consumer_key     :: oauth1_credentials:id(client)
     , signature        :: oauth1_signature:digest()
     , signature_method :: oauth1_signature:method()
     , timestamp        :: oauth1_timestamp:t()
     , nonce            :: oauth1_nonce:t()
     , token            :: oauth1_credentials:id(token)
+
+    , host             :: binary()
     }).

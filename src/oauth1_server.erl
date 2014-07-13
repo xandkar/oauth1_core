@@ -284,16 +284,58 @@ token(#oauth1_server_args_token
                 | error()
        .
 validate_resource_request(#oauth1_server_args_validate_resource_request
-    { realm            = _Realm
-    , consumer_key     = _ConsumerKey
-    , signature        = _Signature
-    , signature_method = _SignatureMethod
-    , timestamp        = _Timestamp
-    , nonce            = _Nonce
-    , token            = _TokenID
+    { resource         = Resource
+    , consumer_key     = ConsumerKey
+    , signature        = SigGiven
+    , signature_method = SigMethod
+    , timestamp        = Timestamp
+    , nonce            = Nonce
+    , token            = TokenID
+    , host             = Host
     }
 ) ->
-    ?not_implemented.
+    ValidateSignature =
+        fun (#request_validation_state
+            { creds_client = {some, ClientCredentials}
+            , creds_token  = {some, Token}
+            }=State) ->
+            ClientSharedSecret =
+                oauth1_credentials:get_secret(ClientCredentials),
+            SigArgs =
+                #oauth1_signature_args_cons
+                { method               = SigMethod
+                , http_req_method      = <<"POST">>
+                , http_req_host        = Host
+                , resource             = Resource
+                , consumer_key         = ConsumerKey
+                , timestamp            = Timestamp
+                , nonce                = Nonce
+
+                , client_shared_secret = ClientSharedSecret
+
+                , token                = {some, Token}
+                , verifier             = none
+                , callback             = none
+                },
+            SigComputed       = oauth1_signature:cons(SigArgs),
+            SigComputedDigest = oauth1_signature:get_digest(SigComputed),
+            case SigGiven =:= SigComputedDigest
+            of  false -> {error, {unauthorized, signature_invalid}}
+            ;   true  -> {ok, State}
+            end
+        end,
+    Steps =
+        [ make_validate_consumer_key(ConsumerKey)
+        , make_validate_token_exists(TokenID)
+        , ValidateSignature
+        , make_validate_nonce(Nonce)
+        ],
+    case hope_result:pipe(Steps, #request_validation_state{})
+    of  {error, _}=Error ->
+            Error
+    ;   {ok, #request_validation_state{}} ->
+            {ok, ok}
+    end.
 
 -spec make_validate_nonce(oauth1_nonce:t()) ->
     request_validator(any()).
