@@ -51,7 +51,7 @@
 
 -record(request_validation_state,
     { creds_client = none :: hope_option:t(oauth1_credentials:t(client))
-    , creds_tmp_tok= none :: hope_option:t(oauth1_credentials:t(tmp))
+    , creds_token  = none :: hope_option:t(oauth1_credentials:t(tmp))
     , verifier     = none :: hope_option:t(oauth1_verifier:t())
 
     , result       = none :: hope_option:t(any())
@@ -235,7 +235,7 @@ token(#oauth1_server_args_token
     ValidateSignature =
         fun (#request_validation_state
             { creds_client = {some, ClientCredentials}
-            , creds_tmp_tok= {some, TmpToken}
+            , creds_token  = {some, Token}
             , verifier     = {some, Verifier}
             }=State) ->
             ClientSharedSecret =
@@ -252,7 +252,7 @@ token(#oauth1_server_args_token
 
                 , client_shared_secret = ClientSharedSecret
 
-                , token                = {some, TmpToken}
+                , token                = {some, Token}
                 , verifier             = {some, Verifier}
                 , callback             = none
                 },
@@ -265,7 +265,7 @@ token(#oauth1_server_args_token
         end,
     Steps =
         [ make_validate_consumer_key(ConsumerKey)
-        , make_validate_tmp_token(TmpTokenID)
+        , make_validate_token_exists(TmpTokenID)
         , make_validate_verifier(VerifierGivenBin, TmpTokenID)
         , ValidateSignature
         , make_validate_nonce(Nonce)
@@ -290,11 +290,10 @@ validate_resource_request(#oauth1_server_args_validate_resource_request
     , signature_method = _SignatureMethod
     , timestamp        = _Timestamp
     , nonce            = _Nonce
-    , token            = _Token
+    , token            = _TokenID
     }
 ) ->
     ?not_implemented.
-
 
 -spec make_validate_nonce(oauth1_nonce:t()) ->
     request_validator(any()).
@@ -308,35 +307,36 @@ make_validate_nonce(Nonce) ->
 
 -spec make_validate_consumer_key(oauth1_credentials:id(client)) ->
     request_validator(any()).
-make_validate_consumer_key(ConsumerKey) ->
-    fun (#request_validation_state{}=State1) ->
-        case oauth1_credentials:fetch(ConsumerKey)
-        of  {error, not_found} ->
-                {error, {unauthorized, client_credentials_invalid}}
-        ;   {error, _}=Error ->
-                Error
-        ;   {ok, ClientCredentials} ->
-                State2 =
-                    State1#request_validation_state
-                    { creds_client = {some, ClientCredentials}
-                    },
-                {ok, State2}
-        end
-    end.
+make_validate_consumer_key({client, <<_/binary>>}=ConsumerKey) ->
+    make_validate_token_exists(ConsumerKey).
 
--spec make_validate_tmp_token(oauth1_credentials:id(tmp)) ->
-    request_validator(any()).
-make_validate_tmp_token(TmpTokenID) ->
+-spec make_validate_token_exists(oauth1_credentials:id(Type)) ->
+    request_validator(any())
+    when Type :: oauth1_credentials:credentials_type().
+make_validate_token_exists({Type, <<_/binary>>}=TokenID) ->
     fun (#request_validation_state{}=State1) ->
-        case oauth1_credentials:fetch(TmpTokenID)
-        of  {error, not_found} ->
-                {error, {unauthorized, token_invalid}}
-        ;   {ok, TmpToken} ->
-                State2 =
-                    State1#request_validation_state
-                    { creds_tmp_tok = {some, TmpToken}
-                    },
-                {ok, State2}
+        UpdateClient =
+            fun (State, Creds) ->
+                State#request_validation_state
+                { creds_client = {some, Creds}
+                }
+            end,
+        UpdateToken =
+            fun (State, Creds) ->
+                State#request_validation_state
+                { creds_token = {some, Creds}
+                }
+            end,
+        ErrorInvalidClient = {error,{unauthorized,client_credentials_invalid}},
+        ErrorInvalidToken  = {error,{unauthorized,token_invalid}},
+        case {oauth1_credentials:fetch(TokenID), Type}
+        of  {{error, not_found}, client} -> ErrorInvalidClient
+        ;   {{error, not_found}, tmp}    -> ErrorInvalidToken
+        ;   {{error, not_found}, token}  -> ErrorInvalidToken
+        ;   {{error, _}=Error, _}        -> Error
+        ;   {{ok, Creds}, client}        -> {ok, UpdateClient(State1, Creds)}
+        ;   {{ok, Creds}, tmp}           -> {ok, UpdateToken(State1, Creds)}
+        ;   {{ok, Creds}, token}         -> {ok, UpdateToken(State1, Creds)}
         end
     end.
 
