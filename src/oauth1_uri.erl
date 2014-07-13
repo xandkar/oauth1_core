@@ -9,6 +9,7 @@
 
 -export(
     [ cons/1
+    , get_host/1
     , get_query/1
     , set_query/2
     , add_query/3
@@ -60,6 +61,11 @@ cons(#oauth1_uri_args_cons
     , path   = Path
     , query  = Query
     }.
+
+-spec get_host(t()) ->
+    binary().
+get_host(#t{host=Host}) ->
+    Host.
 
 -spec get_query(t()) ->
     query().
