@@ -13,5 +13,6 @@
   , {env,
       [ {storage_module , oauth1_storage_ets}
       , {storage_bucket_prefix , <<"oauth1-">>}
+      , {realm_module          , oauth1_realm_default}
       ]}
   ]}.
