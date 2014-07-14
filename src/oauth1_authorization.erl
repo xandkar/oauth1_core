@@ -22,13 +22,12 @@
 -type token() ::
     oauth1_credentials:id(token).
 
--type resource() ::
-    oauth1_resource:t().
+-type realm() ::
+    oauth1_realm:t().
 
 -record(t,
     { token     :: token()
-    % TODO: Are we authorizing resources or realms?
-    , resources :: [resource()]
+    , realms :: [realm()]
     }).
 
 -opaque t() ::
@@ -44,39 +43,37 @@
 cons({token, <<_/binary>>}=Token) ->
     #t
     { token     = Token
-    , resources = ordsets:new()
+    , realms = ordsets:new()
     }.
 
--spec add(t(), resource()) ->
+-spec add(t(), realm()) ->
     t().
-add(#t{resources=Resources}=T, Resource) ->
+add(#t{realms=Realms}=T, Realm) ->
     T#t
-    { resources = ordsets:add_element(Resource, Resources)
+    { realms = ordsets:add_element(Realm, Realms)
     }.
 
--spec remove(t(), resource()) ->
+-spec remove(t(), realm()) ->
     t().
-remove(#t{resources=Resources}=T, Resource) ->
+remove(#t{realms=Realms}=T, Realm) ->
     T#t
-    { resources = ordsets:del_element(Resource, Resources)
+    { realms = ordsets:del_element(Realm, Realms)
     }.
 
--spec is_authorized(t(), resource()) ->
+-spec is_authorized(t(), realm()) ->
     boolean().
-is_authorized(#t{resources=Resources}, Resource) ->
-    ordsets:is_element(Resource, Resources).
+is_authorized(#t{realms=Realms}, Realm) ->
+    ordsets:is_element(Realm, Realms).
 
 -spec store(t()) ->
     hope_result:t(ok, oauth1_storage:error()).
 store(#t
     { token     = {token, <<Token/binary>>}
-    , resources = Resources
+    , realms = Realms
     }
 ) ->
-    ResourcesProps = lists:map(fun oauth1_resource:to_props/1, Resources),
-    ResourcesJson  = jsx:encode(ResourcesProps),
     Key   = Token,
-    Value = ResourcesJson,
+    Value = jsx:encode(Realms),
     oauth1_storage:put(?STORAGE_BUCKET_NAME, Key, Value).
 
 -spec fetch(token()) ->
@@ -86,14 +83,10 @@ fetch({token, <<TokenID/binary>>}=Token) ->
     case oauth1_storage:get(?STORAGE_BUCKET_NAME, Key)
     of  {error, _}=Error ->
             Error
-    ;   {ok, ResourcesJson} ->
-            ResourcesProps = jsx:decode(ResourcesJson),
-            Resources      = lists:map( fun oauth1_resource:of_props/1
-                                      , ResourcesProps
-                                      ),
+    ;   {ok, RealmsJson} ->
             T = #t
                 { token     = Token
-                , resources = Resources
+                , realms = jsx:decode(RealmsJson)
                 },
             {ok, T}
     end.
