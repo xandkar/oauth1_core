@@ -26,7 +26,7 @@
     oauth1_realm:t().
 
 -record(t,
-    { token     :: token()
+    { token  :: token()
     , realms :: [realm()]
     }).
 
@@ -42,7 +42,7 @@
     t().
 cons({token, <<_/binary>>}=Token) ->
     #t
-    { token     = Token
+    { token  = Token
     , realms = ordsets:new()
     }.
 
@@ -68,7 +68,7 @@ is_authorized(#t{realms=Realms}, Realm) ->
 -spec store(t()) ->
     hope_result:t(ok, oauth1_storage:error()).
 store(#t
-    { token     = {token, <<Token/binary>>}
+    { token  = {token, <<Token/binary>>}
     , realms = Realms
     }
 ) ->
@@ -85,7 +85,7 @@ fetch({token, <<TokenID/binary>>}=Token) ->
             Error
     ;   {ok, RealmsJson} ->
             T = #t
-                { token     = Token
+                { token  = Token
                 , realms = jsx:decode(RealmsJson)
                 },
             {ok, T}
