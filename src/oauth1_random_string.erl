@@ -16,4 +16,6 @@
 -spec generate() ->
     t().
 generate() ->
-    oauth1_uuid:generate().
+    RandomBytes = crypto:strong_rand_bytes(1024),
+    Digest      = crypto:hash(ripemd160, RandomBytes),
+    bstr:hexencode(Digest).

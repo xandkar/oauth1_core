@@ -7,7 +7,7 @@
       [ kernel
       , stdlib
       , hope
-      , uuid
+      , bstr
       , cowlib
       ]}
   , {env,
