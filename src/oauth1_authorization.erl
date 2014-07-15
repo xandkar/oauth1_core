@@ -77,16 +77,35 @@ store(#t
     oauth1_storage:put(?STORAGE_BUCKET_NAME, Key, Value).
 
 -spec fetch(token()) ->
-    hope_result:t(t(), oauth1_storage:error()).
+    hope_result:t(t(), Error)
+    when Error :: oauth1_storage:error()
+                | {data_format_invalid, Data :: binary()}
+       .
 fetch({token, <<TokenID/binary>>}=Token) ->
     Key = TokenID,
     case oauth1_storage:get(?STORAGE_BUCKET_NAME, Key)
     of  {error, _}=Error ->
             Error
     ;   {ok, RealmsJson} ->
-            T = #t
-                { token  = Token
-                , realms = jsx:decode(RealmsJson)
-                },
-            {ok, T}
+            ErrorBadData = {error, {data_format_invalid, RealmsJson}},
+            Decoder = hope_result:lift_exn(fun jsx:decode/1),
+            case Decoder(RealmsJson)
+            of  {ok, {incomplete, _}} ->
+                    ErrorBadData
+            ;   {ok, Realms} when is_list(Realms) ->
+                    case lists:all(fun erlang:is_binary/1, Realms)
+                    of  true ->
+                            T = #t
+                                { token  = Token
+                                , realms = Realms
+                                },
+                            {ok, T}
+                    ;   false ->
+                            ErrorBadData
+                    end
+            ;   {ok, _} ->
+                    ErrorBadData
+            ;   {error, _} ->
+                    ErrorBadData
+            end
     end.
