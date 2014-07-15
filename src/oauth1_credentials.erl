@@ -43,13 +43,27 @@
     }.
 
 
--spec generate(credentials_type()) ->
-    t(credentials_type()).
+-spec generate(Type) ->
+    hope_result:t(t(Type), oauth1_random_string:error())
+    when Type :: credentials_type().
 generate(Type) ->
-    #t
-    { id     = {Type, oauth1_random_string:generate()}
-    , secret = {Type, oauth1_random_string:generate()}
-    }.
+    Generate =
+        fun (Acc) ->
+            case oauth1_random_string:generate()
+            of  {ok, RandomString} -> {ok, [RandomString | Acc]}
+            ;   {error, _}=Error   -> Error
+            end
+        end,
+    case hope_result:pipe([Generate, Generate], [])
+    of  {error, _}=Error ->
+            Error
+    ;   {ok, [RandomString1, RandomString2]} ->
+            T = #t
+                { id     = {Type, RandomString1}
+                , secret = {Type, RandomString2}
+                },
+            {ok, T}
+    end.
 
 -spec get_id(t(credentials_type())) ->
     id(credentials_type()).

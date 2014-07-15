@@ -22,12 +22,18 @@
 
 
 -spec generate(oauth1_credentials:id(tmp)) ->
-    t().
+    hope_result:t(t(), oauth1_random_string:error()).
 generate(TempToken) ->
-    #t
-    { temp_token = TempToken
-    , verifier   = oauth1_random_string:generate()
-    }.
+    case oauth1_random_string:generate()
+    of  {error, _}=Error ->
+            Error
+    ;   {ok, RandomString} ->
+            T = #t
+                { temp_token = TempToken
+                , verifier   = RandomString
+                },
+            {ok, T}
+    end.
 
 -spec get_value(t()) ->
     binary().

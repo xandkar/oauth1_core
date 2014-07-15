@@ -19,7 +19,7 @@
 
 
 -spec generate() ->
-    t().
+    hope_result:t(t(), oauth1_random_string:error()).
 generate() ->
     oauth1_random_string:generate().
 

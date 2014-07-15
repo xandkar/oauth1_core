@@ -67,6 +67,7 @@
             hope_result:t( request_validation_state(A)
                          , oauth1_storage:error()
                          | error()
+                         | oauth1_random_string:error()
                          )
     ).
 
@@ -74,21 +75,27 @@
 %% @doc Generate and store a credentials pair {ClientID, ClientSecret).
 %% @end
 -spec register_new_client() ->
-    hope_result:t({ID, Secret}, oauth1_storage:error())
+    hope_result:t({ID, Secret}, Error)
     when ID     :: binary()
        , Secret :: binary()
+       , Error  :: oauth1_storage:error()
+                 | oauth1_random_string:error()
        .
 register_new_client() ->
-    ClientCredentials = oauth1_credentials:generate(client),
-    case oauth1_credentials:store(ClientCredentials)
-    of  {ok, ok} ->
-            Pair =
-                { oauth1_credentials:get_id(ClientCredentials)
-                , oauth1_credentials:get_secret(ClientCredentials)
-                },
-            {ok, Pair}
-    ;   {error, _}=Error ->
+    case oauth1_credentials:generate(client)
+    of  {error, _}=Error ->
             Error
+    ;   {ok, ClientCredentials} ->
+            case oauth1_credentials:store(ClientCredentials)
+            of  {ok, ok} ->
+                    Pair =
+                        { oauth1_credentials:get_id(ClientCredentials)
+                        , oauth1_credentials:get_secret(ClientCredentials)
+                        },
+                    {ok, Pair}
+            ;   {error, _}=Error ->
+                    Error
+            end
     end.
 
 %% @doc Initiate a resource access grant transaction.
@@ -97,6 +104,7 @@ register_new_client() ->
     hope_result:t(Ok, Error)
     when Ok    :: {oauth1_credentials:t(tmp), CallbackConfirmed :: boolean()}
        , Error :: oauth1_storage:error()
+                | oauth1_random_string:error()
                 | error()
        .
 initiate(#oauth1_server_args_initiate
@@ -146,22 +154,30 @@ initiate(#oauth1_server_args_initiate
                     of  {ok, ok} ->
                             {error, {unauthorized, nonce_used}}
                     ;   {error, not_found} ->
-                            Token = oauth1_credentials:generate(tmp),
-                            case oauth1_credentials:store(Token)
+                            case oauth1_credentials:generate(tmp)
                             of  {error, _}=Error ->
                                     Error
-                            ;   {ok, ok} ->
-                                    TokenID = oauth1_credentials:get_id(Token),
-                                    Callback =
-                                        oauth1_callback:cons( TokenID
-                                                            , CallbackURI
-                                                            ),
-                                    case oauth1_callback:store(Callback)
+                            ;   {ok, Token} ->
+                                    case oauth1_credentials:store(Token)
                                     of  {error, _}=Error ->
                                             Error
                                     ;   {ok, ok} ->
-                                            IsCallbackConfirmed = false,
-                                            {ok, {TokenID, IsCallbackConfirmed}}
+                                            TokenID =
+                                                oauth1_credentials:get_id(Token),
+                                            Callback =
+                                                oauth1_callback:cons( TokenID
+                                                                    , CallbackURI
+                                                                    ),
+                                            case oauth1_callback:store(Callback)
+                                            of  {error, _}=Error ->
+                                                    Error
+                                            ;   {ok, ok} ->
+                                                    IsCallbackConfirmed = false,
+                                                    {ok, { TokenID
+                                                         , IsCallbackConfirmed
+                                                         }
+                                                    }
+                                            end
                                     end
                             end
                     ;   {error, _}=Error ->
@@ -178,6 +194,7 @@ initiate(#oauth1_server_args_initiate
     hope_result:t(Ok, Error)
     when Ok    :: oauth1_uri:t()
        , Error :: oauth1_storage:error()
+                | oauth1_random_string:error()
                 | error()
        .
 authorize(<<TmpTokenID/binary>>) ->
@@ -194,15 +211,20 @@ authorize(<<TmpTokenID/binary>>) ->
             ;   {error, _}=Error ->
                     Error
             ;   {ok, Callback1} ->
-                    Verifier = oauth1_verifier:generate(TmpToken),
-                    case oauth1_verifier:store(Verifier)
+                    case oauth1_verifier:generate(TmpToken)
                     of  {error, _}=Error ->
                             Error
-                    ;   {ok, ok} ->
-                            Callback2 = oauth1_callback:set_verifier( Callback1
+                    ;   {ok, Verifier} ->
+                            case oauth1_verifier:store(Verifier)
+                            of  {error, _}=Error ->
+                                    Error
+                            ;   {ok, ok} ->
+                                    Callback2 =
+                                        oauth1_callback:set_verifier( Callback1
                                                                     , Verifier
                                                                     ),
-                            oauth1_callback:get_uri(Callback2)
+                                    oauth1_callback:get_uri(Callback2)
+                            end
                     end
             end
     end.
@@ -408,15 +430,19 @@ make_validate_verifier(VerifierGivenBin, TmpTokenID) ->
        .
 make_issue_token(Type) when Type =:= tmp orelse Type =:= token ->
     fun (#request_validation_state{}=State1) ->
-        Token = oauth1_credentials:generate(Type),
-        case oauth1_credentials:store(Token)
+        case oauth1_credentials:generate(Type)
         of  {error, _}=Error ->
                 Error
-        ;   {ok, ok} ->
-                State2 =
-                    State1#request_validation_state
-                    { result = {some, Token}
-                    },
-                {ok, State2}
+        ;   {ok, Token} ->
+                case oauth1_credentials:store(Token)
+                of  {error, _}=Error ->
+                        Error
+                ;   {ok, ok} ->
+                        State2 =
+                            State1#request_validation_state
+                            { result = {some, Token}
+                            },
+                        {ok, State2}
+                end
         end
     end.
