@@ -12,7 +12,7 @@
 
 
 -type t() ::
-    oauth1_uuid:t().
+    oauth1_random_string:t().
 
 
 -define(BUCKET_NAME, <<"oauth1-nonce">>).
@@ -21,7 +21,7 @@
 -spec generate() ->
     t().
 generate() ->
-    oauth1_uuid:generate().
+    oauth1_random_string:generate().
 
 -spec store(t()) ->
     hope_result:t(ok, oauth1_storage:error()).

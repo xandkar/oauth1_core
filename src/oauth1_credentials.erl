@@ -24,10 +24,10 @@
     .
 
 -type id(CredentialsType) ::
-    {CredentialsType, oauth1_uuid:t()}.
+    {CredentialsType, oauth1_random_string:t()}.
 
 -type secret(CredentialsType) ::
-    {CredentialsType, oauth1_uuid:t()}.
+    {CredentialsType, oauth1_random_string:t()}.
 
 -record(t,
     { id     :: id(credentials_type())
@@ -47,8 +47,8 @@
     t(credentials_type()).
 generate(Type) ->
     #t
-    { id     = {Type, oauth1_uuid:generate()}
-    , secret = {Type, oauth1_uuid:generate()}
+    { id     = {Type, oauth1_random_string:generate()}
+    , secret = {Type, oauth1_random_string:generate()}
     }.
 
 -spec get_id(t(credentials_type())) ->

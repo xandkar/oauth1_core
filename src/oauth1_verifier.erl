@@ -26,7 +26,7 @@
 generate(TempToken) ->
     #t
     { temp_token = TempToken
-    , verifier   = oauth1_uuid:generate()
+    , verifier   = oauth1_random_string:generate()
     }.
 
 -spec get_value(t()) ->
