@@ -23,7 +23,7 @@
     oauth1_credentials:id(token).
 
 -type realm() ::
-    oauth1_realm:t().
+    binary().
 
 -record(t,
     { token  :: token()
