@@ -50,8 +50,9 @@
     #oauth1_server_args_validate_resource_request{}.
 
 -record(request_validation_state,
-    { creds_client = none :: hope_option:t(oauth1_credentials:t(client))
-    , creds_token  = none :: hope_option:t(oauth1_credentials:t(tmp))
+    { client_creds = none :: hope_option:t(oauth1_credentials:t(client))
+    , token_tmp    = none :: hope_option:t(oauth1_credentials:t(tmp))
+    , token_final  = none :: hope_option:t(oauth1_credentials:t(token))
     , verifier     = none :: hope_option:t(oauth1_verifier:t())
 
     , result       = none :: hope_option:t(any())
@@ -253,8 +254,8 @@ token(#oauth1_server_args_token
 ) ->
     ValidateSignature =
         fun (#request_validation_state
-            { creds_client = {some, ClientCredentials}
-            , creds_token  = {some, Token}
+            { client_creds = {some, ClientCredentials}
+            , token_tmp    = {some, Token}
             , verifier     = {some, Verifier}
             }=State) ->
             ClientSharedSecret =
@@ -315,8 +316,8 @@ validate_resource_request(#oauth1_server_args_validate_resource_request
 ) ->
     ValidateSignature =
         fun (#request_validation_state
-            { creds_client = {some, ClientCredentials}
-            , creds_token  = {some, Token}
+            { client_creds = {some, ClientCredentials}
+            , token_final  = {some, Token}
             }=State) ->
             ClientSharedSecret =
                 oauth1_credentials:get_secret(ClientCredentials),
@@ -379,13 +380,19 @@ make_validate_token_exists({Type, <<_/binary>>}=TokenID) ->
         UpdateClient =
             fun (State, Creds) ->
                 State#request_validation_state
-                { creds_client = {some, Creds}
+                { client_creds = {some, Creds}
                 }
             end,
-        UpdateToken =
+        UpdateTokenTmp =
             fun (State, Creds) ->
                 State#request_validation_state
-                { creds_token = {some, Creds}
+                { token_tmp = {some, Creds}
+                }
+            end,
+        UpdateTokenFnl =
+            fun (State, Creds) ->
+                State#request_validation_state
+                { token_final = {some, Creds}
                 }
             end,
         ErrorInvalidClient = {error,{unauthorized,client_credentials_invalid}},
@@ -396,8 +403,8 @@ make_validate_token_exists({Type, <<_/binary>>}=TokenID) ->
         ;   {{error, not_found}, token}  -> ErrorInvalidToken
         ;   {{error, _}=Error, _}        -> Error
         ;   {{ok, Creds}, client}        -> {ok, UpdateClient(State1, Creds)}
-        ;   {{ok, Creds}, tmp}           -> {ok, UpdateToken(State1, Creds)}
-        ;   {{ok, Creds}, token}         -> {ok, UpdateToken(State1, Creds)}
+        ;   {{ok, Creds}, tmp}           -> {ok, UpdateTokenTmp(State1, Creds)}
+        ;   {{ok, Creds}, token}         -> {ok, UpdateTokenFnl(State1, Creds)}
         end
     end.
 
