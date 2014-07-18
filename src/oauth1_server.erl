@@ -121,12 +121,10 @@ initiate(#oauth1_server_args_initiate
     , host                = Host
     }
 ) ->
-    case oauth1_credentials:fetch(ConsumerKey)
-    of  {error, not_found} ->
-            {error, {unauthorized, client_credentials_invalid}}
-    ;   {error, _}=Error ->
-            Error
-    ;   {ok, ClientCredentials} ->
+    ValidateSignature =
+        fun (#request_validation_state
+            { client_creds = {some, ClientCredentials}
+            }=State) ->
             ClientSharedSecret =
                 oauth1_credentials:get_secret(ClientCredentials),
             SigArgs =
@@ -148,44 +146,31 @@ initiate(#oauth1_server_args_initiate
             SigComputed       = oauth1_signature:cons(SigArgs),
             SigComputedDigest = oauth1_signature:get_digest(SigComputed),
             case SigGiven =:= SigComputedDigest
-            of  false ->
-                    {error, {unauthorized, signature_invalid}}
-            ;   true  ->
-                    case oauth1_nonce:fetch(Nonce)
-                    of  {ok, ok} ->
-                            {error, {unauthorized, nonce_used}}
-                    ;   {error, not_found} ->
-                            case oauth1_credentials:generate(tmp)
-                            of  {error, _}=Error ->
-                                    Error
-                            ;   {ok, Token} ->
-                                    case oauth1_credentials:store(Token)
-                                    of  {error, _}=Error ->
-                                            Error
-                                    ;   {ok, ok} ->
-                                            TokenID =
-                                                oauth1_credentials:get_id(Token),
-                                            Callback =
-                                                oauth1_callback:cons( TokenID
-                                                                    , CallbackURI
-                                                                    ),
-                                            case oauth1_callback:store(Callback)
-                                            of  {error, _}=Error ->
-                                                    Error
-                                            ;   {ok, ok} ->
-                                                    IsCallbackConfirmed = false,
-                                                    {ok, { TokenID
-                                                         , IsCallbackConfirmed
-                                                         }
-                                                    }
-                                            end
-                                    end
-                            end
-                    ;   {error, _}=Error ->
-                            Error
-                    end
+            of  false -> {error, {unauthorized, signature_invalid}}
+            ;   true  -> {ok, State}
             end
-    end.
+        end,
+    Steps =
+        [ make_validate_consumer_key(ConsumerKey)
+        , ValidateSignature
+        , make_validate_nonce(Nonce)
+        , make_issue_token(tmp)
+        , fun (#request_validation_state{result={some, Token}}) ->
+              TokenID  = oauth1_credentials:get_id(Token),
+              Callback = oauth1_callback:cons(TokenID, CallbackURI),
+              case oauth1_callback:store(Callback)
+              of  {error, _}=Error ->
+                      Error
+              ;   {ok, ok} ->
+                      IsCallbackConfirmed = false,
+                      {ok, { TokenID
+                           , IsCallbackConfirmed
+                           }
+                      }
+              end
+          end
+        ],
+    hope_result:pipe(Steps, #request_validation_state{}).
 
 %% @doc Owner authorizes the client's temporary token and, in return, gets the
 %% uri of the client "ready" callback with the tmp token and a verifier query
