@@ -72,6 +72,20 @@
                          )
     ).
 
+-record(common_sig_params,
+    { method               :: oauth1_signature:method()
+    , http_req_method      :: binary()
+    , http_req_host        :: binary()
+    , resource             :: oauth1_resource:t()
+    , consumer_key         :: oauth1_credentials:id(client)
+    , timestamp            :: oauth1_timestamp:t()
+    , nonce                :: oauth1_nonce:t()
+    , callback      = none :: hope_option:t(oauth1_uri:t())
+    }).
+
+-type common_sig_params() ::
+    #common_sig_params{}.
+
 
 %% @doc Generate and store a credentials pair {ClientID, ClientSecret).
 %% @end
@@ -121,38 +135,19 @@ initiate(#oauth1_server_args_initiate
     , host                = Host
     }
 ) ->
-    ValidateSignature =
-        fun (#request_validation_state
-            { given_creds_client = {some, ClientCredentials}
-            }=State) ->
-            ClientSharedSecret =
-                oauth1_credentials:get_secret(ClientCredentials),
-            SigArgs =
-                #oauth1_signature_args_cons
-                { method               = SigMethod
-                , http_req_method      = <<"POST">>
-                , http_req_host        = Host
-                , resource             = Resource
-                , consumer_key         = ConsumerKey
-                , timestamp            = Timestamp
-                , nonce                = Nonce
-
-                , client_shared_secret = ClientSharedSecret
-
-                , token                = none
-                , verifier             = none
-                , callback             = {some, CallbackURI}
-                },
-            SigComputed       = oauth1_signature:cons(SigArgs),
-            SigComputedDigest = oauth1_signature:get_digest(SigComputed),
-            case SigGiven =:= SigComputedDigest
-            of  false -> {error, {unauthorized, signature_invalid}}
-            ;   true  -> {ok, State}
-            end
-        end,
+    CommonSigParams = #common_sig_params
+        { method          = SigMethod
+        , http_req_method = <<"POST">>
+        , http_req_host   = Host
+        , resource        = Resource
+        , consumer_key    = ConsumerKey
+        , timestamp       = Timestamp
+        , nonce           = Nonce
+        , callback        = {some, CallbackURI}
+        },
     Steps =
         [ make_validate_consumer_key(ConsumerKey)
-        , ValidateSignature
+        , make_validate_signature(SigGiven, none, CommonSigParams)
         , make_validate_nonce(Nonce)
         , make_issue_token(tmp)
         , fun (#request_validation_state{issued_creds_tmp={some, Token}}) ->
@@ -237,42 +232,21 @@ token(#oauth1_server_args_token
     , host             = Host
     }
 ) ->
-    ValidateSignature =
-        fun (#request_validation_state
-            { given_creds_client = {some, ClientCredentials}
-            , given_creds_tmp    = {some, Token}
-            , given_verifier     = {some, Verifier}
-            }=State) ->
-            ClientSharedSecret =
-                oauth1_credentials:get_secret(ClientCredentials),
-            SigArgs =
-                #oauth1_signature_args_cons
-                { method               = SigMethod
-                , http_req_method      = <<"POST">>
-                , http_req_host        = Host
-                , resource             = Resource
-                , consumer_key         = ConsumerKey
-                , timestamp            = Timestamp
-                , nonce                = Nonce
-
-                , client_shared_secret = ClientSharedSecret
-
-                , token                = {some, Token}
-                , verifier             = {some, Verifier}
-                , callback             = none
-                },
-            SigComputed       = oauth1_signature:cons(SigArgs),
-            SigComputedDigest = oauth1_signature:get_digest(SigComputed),
-            case SigGiven =:= SigComputedDigest
-            of  false -> {error, {unauthorized, signature_invalid}}
-            ;   true  -> {ok, State}
-            end
-        end,
+    CommonSigParams = #common_sig_params
+        { method          = SigMethod
+        , http_req_method = <<"POST">>
+        , http_req_host   = Host
+        , resource        = Resource
+        , consumer_key    = ConsumerKey
+        , timestamp       = Timestamp
+        , nonce           = Nonce
+        , callback        = none
+        },
     Steps =
         [ make_validate_consumer_key(ConsumerKey)
         , make_validate_token_exists(TmpTokenID)
         , make_validate_verifier(VerifierGivenBin, TmpTokenID)
-        , ValidateSignature
+        , make_validate_signature(SigGiven, {some, tmp}, CommonSigParams)
         , make_validate_nonce(Nonce)
         , make_issue_token(token)
         ],
@@ -299,40 +273,20 @@ validate_resource_request(#oauth1_server_args_validate_resource_request
     , host             = Host
     }
 ) ->
-    ValidateSignature =
-        fun (#request_validation_state
-            { given_creds_client = {some, ClientCredentials}
-            , given_creds_token  = {some, Token}
-            }=State) ->
-            ClientSharedSecret =
-                oauth1_credentials:get_secret(ClientCredentials),
-            SigArgs =
-                #oauth1_signature_args_cons
-                { method               = SigMethod
-                , http_req_method      = <<"POST">>
-                , http_req_host        = Host
-                , resource             = Resource
-                , consumer_key         = ConsumerKey
-                , timestamp            = Timestamp
-                , nonce                = Nonce
-
-                , client_shared_secret = ClientSharedSecret
-
-                , token                = {some, Token}
-                , verifier             = none
-                , callback             = none
-                },
-            SigComputed       = oauth1_signature:cons(SigArgs),
-            SigComputedDigest = oauth1_signature:get_digest(SigComputed),
-            case SigGiven =:= SigComputedDigest
-            of  false -> {error, {unauthorized, signature_invalid}}
-            ;   true  -> {ok, State}
-            end
-        end,
+    CommonSigParams = #common_sig_params
+        { method          = SigMethod
+        , http_req_method = <<"GET">>
+        , http_req_host   = Host
+        , resource        = Resource
+        , consumer_key    = ConsumerKey
+        , timestamp       = Timestamp
+        , nonce           = Nonce
+        , callback        = none
+        },
     Steps =
         [ make_validate_consumer_key(ConsumerKey)
         , make_validate_token_exists(TokenID)
-        , ValidateSignature
+        , make_validate_signature(SigGiven, {some, token}, CommonSigParams)
         , make_validate_nonce(Nonce)
         ],
     case hope_result:pipe(Steps, #request_validation_state{})
@@ -340,6 +294,59 @@ validate_resource_request(#oauth1_server_args_validate_resource_request
             Error
     ;   {ok, #request_validation_state{}} ->
             {ok, ok}
+    end.
+
+-spec make_validate_signature(SigGiven, TokenTypeOpt, CommonParams) ->
+    request_validator()
+    when SigGiven     :: binary()
+       , TokenTypeOpt :: hope_option:t(tmp | token)
+       , CommonParams :: common_sig_params()
+       .
+make_validate_signature(SigGiven, TokenTypeOpt, #common_sig_params
+{ method          = SigMeth
+, http_req_method = HttpMeth
+, http_req_host   = HttpHost
+, resource        = Resource
+, consumer_key    = ConsumerKey
+, timestamp       = Timestamp
+, nonce           = Nonce
+, callback        = CallbackOpt
+}) ->
+    fun (#request_validation_state
+        { given_creds_client = {some, ClientCredentials}
+        , given_creds_tmp    = GivenCredsTmpOpt
+        , given_creds_token  = GivenCredsTokenOpt
+        , given_verifier     = VerifierOpt
+        }=State) ->
+        TokenOpt =
+            case TokenTypeOpt
+            of  none          -> none
+            ;   {some, tmp}   -> {some, _} = GivenCredsTmpOpt
+            ;   {some, token} -> {some, _} = GivenCredsTokenOpt
+            end,
+        ClientSharedSecret = oauth1_credentials:get_secret(ClientCredentials),
+        SigArgs =
+            #oauth1_signature_args_cons
+            { method               = SigMeth
+            , http_req_method      = HttpMeth
+            , http_req_host        = HttpHost
+            , resource             = Resource
+            , consumer_key         = ConsumerKey
+            , timestamp            = Timestamp
+            , nonce                = Nonce
+
+            , client_shared_secret = ClientSharedSecret
+
+            , token                = TokenOpt
+            , verifier             = VerifierOpt
+            , callback             = CallbackOpt
+            },
+        SigComputed       = oauth1_signature:cons(SigArgs),
+        SigComputedDigest = oauth1_signature:get_digest(SigComputed),
+        case SigGiven =:= SigComputedDigest
+        of  false -> {error, {unauthorized, signature_invalid}}
+        ;   true  -> {ok, State}
+        end
     end.
 
 -spec make_validate_nonce(oauth1_nonce:t()) ->
