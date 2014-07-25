@@ -368,24 +368,21 @@ make_validate_consumer_key({client, <<_/binary>>}=ConsumerKey) ->
     request_validator()
     when Type :: oauth1_credentials:credentials_type().
 make_validate_token_exists({Type, <<_/binary>>}=TokenID) ->
-    fun (#request_validation_state{}=State1) ->
-        UpdateClient =
-            fun (State, Creds) ->
+    fun (#request_validation_state{}=State) ->
+        SetCredsClient =
+            fun (Creds) ->
                 State#request_validation_state
-                { given_creds_client = {some, Creds}
-                }
+                {given_creds_client = {some, Creds}}
             end,
-        UpdateTokenTmp =
-            fun (State, Creds) ->
+        SetCredsTmp =
+            fun (Creds) ->
                 State#request_validation_state
-                { given_creds_tmp = {some, Creds}
-                }
+                {given_creds_tmp = {some, Creds}}
             end,
-        UpdateTokenFnl =
-            fun (State, Creds) ->
+        SetCredsToken =
+            fun (Creds) ->
                 State#request_validation_state
-                { given_creds_token = {some, Creds}
-                }
+                {given_creds_token = {some, Creds}}
             end,
         ErrorInvalidClient = {error,{unauthorized,client_credentials_invalid}},
         ErrorInvalidToken  = {error,{unauthorized,token_invalid}},
@@ -394,9 +391,9 @@ make_validate_token_exists({Type, <<_/binary>>}=TokenID) ->
         ;   {{error, not_found}, tmp}    -> ErrorInvalidToken
         ;   {{error, not_found}, token}  -> ErrorInvalidToken
         ;   {{error, _}=Error, _}        -> Error
-        ;   {{ok, Creds}, client}        -> {ok, UpdateClient(State1, Creds)}
-        ;   {{ok, Creds}, tmp}           -> {ok, UpdateTokenTmp(State1, Creds)}
-        ;   {{ok, Creds}, token}         -> {ok, UpdateTokenFnl(State1, Creds)}
+        ;   {{ok, Creds}, client}        -> {ok, SetCredsClient(Creds)}
+        ;   {{ok, Creds}, tmp}           -> {ok, SetCredsTmp   (Creds)}
+        ;   {{ok, Creds}, token}         -> {ok, SetCredsToken (Creds)}
         end
     end.
 
