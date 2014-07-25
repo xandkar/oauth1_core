@@ -50,22 +50,22 @@
     #oauth1_server_args_validate_resource_request{}.
 
 -record(request_validation_state,
-    { client_creds = none :: hope_option:t(oauth1_credentials:t(client))
-    , token_tmp    = none :: hope_option:t(oauth1_credentials:t(tmp))
-    , token_final  = none :: hope_option:t(oauth1_credentials:t(token))
-    , verifier     = none :: hope_option:t(oauth1_verifier:t())
+    { given_creds_client  = none :: hope_option:t(oauth1_credentials:t(client))
+    , given_creds_tmp     = none :: hope_option:t(oauth1_credentials:t(tmp))
+    , given_creds_token   = none :: hope_option:t(oauth1_credentials:t(token))
 
-    , result       = none :: hope_option:t(any())
+    , issued_creds_tmp    = none :: hope_option:t(oauth1_credentials:t(tmp))
+    , issued_creds_token  = none :: hope_option:t(oauth1_credentials:t(token))
+
+    , given_verifier      = none :: hope_option:t(oauth1_verifier:t())
     }).
 
--type request_validation_state(A) ::
-    #request_validation_state
-    { result :: hope_option:t(A)
-    }.
+-type request_validation_state() ::
+    #request_validation_state{}.
 
--type request_validator(A) ::
-    fun((request_validation_state(A)) ->
-            hope_result:t( request_validation_state(A)
+-type request_validator() ::
+    fun((request_validation_state()) ->
+            hope_result:t( request_validation_state()
                          , oauth1_storage:error()
                          | error()
                          | oauth1_random_string:error()
@@ -123,7 +123,7 @@ initiate(#oauth1_server_args_initiate
 ) ->
     ValidateSignature =
         fun (#request_validation_state
-            { client_creds = {some, ClientCredentials}
+            { given_creds_client = {some, ClientCredentials}
             }=State) ->
             ClientSharedSecret =
                 oauth1_credentials:get_secret(ClientCredentials),
@@ -155,7 +155,7 @@ initiate(#oauth1_server_args_initiate
         , ValidateSignature
         , make_validate_nonce(Nonce)
         , make_issue_token(tmp)
-        , fun (#request_validation_state{result={some, Token}}) ->
+        , fun (#request_validation_state{issued_creds_tmp={some, Token}}) ->
               TokenID  = oauth1_credentials:get_id(Token),
               Callback = oauth1_callback:cons(TokenID, CallbackURI),
               case oauth1_callback:store(Callback)
@@ -239,9 +239,9 @@ token(#oauth1_server_args_token
 ) ->
     ValidateSignature =
         fun (#request_validation_state
-            { client_creds = {some, ClientCredentials}
-            , token_tmp    = {some, Token}
-            , verifier     = {some, Verifier}
+            { given_creds_client = {some, ClientCredentials}
+            , given_creds_tmp    = {some, Token}
+            , given_verifier     = {some, Verifier}
             }=State) ->
             ClientSharedSecret =
                 oauth1_credentials:get_secret(ClientCredentials),
@@ -279,7 +279,7 @@ token(#oauth1_server_args_token
     case hope_result:pipe(Steps, #request_validation_state{})
     of  {error, _}=Error ->
             Error
-    ;   {ok, #request_validation_state{result={some, Token}}} ->
+    ;   {ok, #request_validation_state{issued_creds_token={some, Token}}} ->
             {ok, Token}
     end.
 
@@ -301,8 +301,8 @@ validate_resource_request(#oauth1_server_args_validate_resource_request
 ) ->
     ValidateSignature =
         fun (#request_validation_state
-            { client_creds = {some, ClientCredentials}
-            , token_final  = {some, Token}
+            { given_creds_client = {some, ClientCredentials}
+            , given_creds_token  = {some, Token}
             }=State) ->
             ClientSharedSecret =
                 oauth1_credentials:get_secret(ClientCredentials),
@@ -343,7 +343,7 @@ validate_resource_request(#oauth1_server_args_validate_resource_request
     end.
 
 -spec make_validate_nonce(oauth1_nonce:t()) ->
-    request_validator(any()).
+    request_validator().
 make_validate_nonce(Nonce) ->
     fun (#request_validation_state{}=State) ->
         case oauth1_nonce:fetch(Nonce)
@@ -353,31 +353,31 @@ make_validate_nonce(Nonce) ->
     end.
 
 -spec make_validate_consumer_key(oauth1_credentials:id(client)) ->
-    request_validator(any()).
+    request_validator().
 make_validate_consumer_key({client, <<_/binary>>}=ConsumerKey) ->
     make_validate_token_exists(ConsumerKey).
 
 -spec make_validate_token_exists(oauth1_credentials:id(Type)) ->
-    request_validator(any())
+    request_validator()
     when Type :: oauth1_credentials:credentials_type().
 make_validate_token_exists({Type, <<_/binary>>}=TokenID) ->
     fun (#request_validation_state{}=State1) ->
         UpdateClient =
             fun (State, Creds) ->
                 State#request_validation_state
-                { client_creds = {some, Creds}
+                { given_creds_client = {some, Creds}
                 }
             end,
         UpdateTokenTmp =
             fun (State, Creds) ->
                 State#request_validation_state
-                { token_tmp = {some, Creds}
+                { given_creds_tmp = {some, Creds}
                 }
             end,
         UpdateTokenFnl =
             fun (State, Creds) ->
                 State#request_validation_state
-                { token_final = {some, Creds}
+                { given_creds_token = {some, Creds}
                 }
             end,
         ErrorInvalidClient = {error,{unauthorized,client_credentials_invalid}},
@@ -394,7 +394,7 @@ make_validate_token_exists({Type, <<_/binary>>}=TokenID) ->
     end.
 
 -spec make_validate_verifier(binary(), oauth1_credentials:id(tmp)) ->
-    request_validator(any()).
+    request_validator().
 make_validate_verifier(VerifierGivenBin, TmpTokenID) ->
     fun (#request_validation_state{}=State1) ->
         case oauth1_verifier:fetch(TmpTokenID)
@@ -408,19 +408,15 @@ make_validate_verifier(VerifierGivenBin, TmpTokenID) ->
                 ;   true ->
                         State2 =
                             State1#request_validation_state
-                            { verifier = {some, Verifier}
+                            { given_verifier = {some, Verifier}
                             },
                         {ok, State2}
                 end
         end
     end.
 
--spec make_issue_token(Type) ->
-    request_validator(Token)
-    when Token :: oauth1_credentials:t(Type)
-       , Type  :: tmp | token
-       .
-make_issue_token(Type) when Type =:= tmp orelse Type =:= token ->
+-spec make_issue_token(tmp | token) -> request_validator().
+make_issue_token(Type) ->
     fun (#request_validation_state{}=State1) ->
         case oauth1_credentials:generate(Type)
         of  {error, _}=Error ->
@@ -431,9 +427,14 @@ make_issue_token(Type) when Type =:= tmp orelse Type =:= token ->
                         Error
                 ;   {ok, ok} ->
                         State2 =
-                            State1#request_validation_state
-                            { result = {some, Token}
-                            },
+                            case Type
+                            of  tmp ->
+                                    State1#request_validation_state
+                                    {issued_creds_tmp = {some, Token}}
+                            ;   token ->
+                                    State1#request_validation_state
+                                    {issued_creds_token = {some, Token}}
+                            end,
                         {ok, State2}
                 end
         end
