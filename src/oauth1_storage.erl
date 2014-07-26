@@ -12,7 +12,7 @@
 
 -type error() ::
       not_found
-    | io_error
+    | {io_error, any()}
     .
 
 -callback put(binary(), binary(), binary()) ->
