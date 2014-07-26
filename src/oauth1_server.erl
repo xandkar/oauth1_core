@@ -189,34 +189,37 @@ initiate(#oauth1_server_args_initiate
        .
 authorize(<<TmpTokenID/binary>>) ->
     TmpToken = {tmp, TmpTokenID},
-    case oauth1_credentials:fetch(TmpToken)
-    of  {error, not_found} ->
-            {error, {unauthorized, token_invalid}}
-    ;   {error, _}=Error ->
-            Error
-    ;   {ok, _TmpCredentials} ->
-            case oauth1_callback:fetch(TmpToken)
-            of  {error, not_found} ->
-                    error("No callback found for a valid tmp token!")
-            ;   {error, _}=Error ->
-                    Error
-            ;   {ok, Callback1} ->
-                    case oauth1_verifier:generate(TmpToken)
-                    of  {error, _}=Error ->
-                            Error
-                    ;   {ok, Verifier} ->
-                            case oauth1_verifier:store(Verifier)
-                            of  {error, _}=Error ->
-                                    Error
-                            ;   {ok, ok} ->
-                                    V  = Verifier,
-                                    C1 = Callback1,
-                                    C2 = oauth1_callback:set_verifier(C1, V),
-                                    oauth1_callback:get_uri(C2)
-                            end
-                    end
-            end
-    end.
+    Steps =
+        [ make_validate_token_exists(TmpToken)
+        , fun (#request_validation_state{}) ->
+              case oauth1_callback:fetch(TmpToken)
+              of  {error, not_found} ->
+                      error("No callback found for a valid tmp token!")
+              ;   {error, _}=Error ->
+                      Error
+              ;   {ok, _}=Ok ->
+                      Ok
+              end
+          end
+        , fun (Callback) ->
+              case oauth1_verifier:generate(TmpToken)
+              of  {error, _}=Error -> Error
+              ;   {ok, Verifier}   -> {ok, {Callback, Verifier}}
+              end
+          end
+        , fun ({Callback, Verifier}) ->
+              case oauth1_verifier:store(Verifier)
+              of  {error, _}=Error ->
+                      Error
+              ;   {ok, ok} ->
+                      V  = Verifier,
+                      C1 = Callback,
+                      C2 = oauth1_callback:set_verifier(C1, V),
+                      oauth1_callback:get_uri(C2)
+              end
+          end
+        ],
+    hope_result:pipe(Steps, #request_validation_state{}).
 
 %% @doc Grant the real access token.
 %% @end
