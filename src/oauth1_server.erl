@@ -18,6 +18,11 @@
     , validate_resource_request/1
     ]).
 
+
+%%=============================================================================
+%% Types
+%%=============================================================================
+
 -type error_bad_request() ::
       parameters_unsupported
     | parameters_missing
@@ -86,6 +91,10 @@
 -type common_sig_params() ::
     #common_sig_params{}.
 
+
+%%=============================================================================
+%% API
+%%=============================================================================
 
 %% @doc Generate and store a credentials pair {ClientID, ClientSecret).
 %% @end
@@ -294,6 +303,11 @@ validate_resource_request(#oauth1_server_args_validate_resource_request
     ;   {ok, #request_validation_state{}} ->
             {ok, ok}
     end.
+
+
+%%=============================================================================
+%% Helpers
+%%=============================================================================
 
 -spec make_validate_signature(SigGiven, TokenTypeOpt, CommonParams) ->
     request_validator()
