@@ -200,11 +200,10 @@ authorize(<<TmpTokenID/binary>>) ->
                             of  {error, _}=Error ->
                                     Error
                             ;   {ok, ok} ->
-                                    Callback2 =
-                                        oauth1_callback:set_verifier( Callback1
-                                                                    , Verifier
-                                                                    ),
-                                    oauth1_callback:get_uri(Callback2)
+                                    V  = Verifier,
+                                    C1 = Callback1,
+                                    C2 = oauth1_callback:set_verifier(C1, V),
+                                    oauth1_callback:get_uri(C2)
                             end
                     end
             end
