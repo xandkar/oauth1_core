@@ -83,13 +83,13 @@ id_to_bin({_, ID}) ->
 -spec store(t(credentials_type())) ->
     hope_result:t(ok, oauth1_storage:error()).
 store(#t{id={Type, Key}, secret={Type, Value}}) ->
-    Bucket = type_to_bucket_name(Type),
+    Bucket = type_to_bucket(Type),
     oauth1_storage:put(Bucket, Key, Value).
 
 -spec fetch(id(credentials_type())) ->
     hope_result:t(t(credentials_type()), oauth1_storage:error()).
 fetch({Type, <<ID/binary>>}) ->
-    Bucket = type_to_bucket_name(Type),
+    Bucket = type_to_bucket(Type),
     case oauth1_storage:get(Bucket, ID)
     of  {error, _}=Error ->
             Error
@@ -106,15 +106,8 @@ fetch({Type, <<ID/binary>>}) ->
 %% Helpers
 %% ============================================================================
 
--spec type_to_bucket_name(credentials_type()) ->
+-spec type_to_bucket(credentials_type()) ->
     binary().
-type_to_bucket_name(Type) ->
-    Prefix = <<"oauth1-credentials">>,
-    Name   = type_to_binary(Type),
-    <<Prefix/binary, "-", Name/binary>>.
-
--spec type_to_binary(credentials_type()) ->
-    binary().
-type_to_binary(client) -> <<"client">>;
-type_to_binary(tmp)    -> <<"tmp">>;
-type_to_binary(token)  -> <<"token">>.
+type_to_bucket(client) -> oauth1_config:get(storage_bucket_credentials_client);
+type_to_bucket(tmp)    -> oauth1_config:get(storage_bucket_credentials_tmp);
+type_to_bucket(token)  -> oauth1_config:get(storage_bucket_credentials_token).

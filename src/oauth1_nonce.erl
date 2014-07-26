@@ -15,7 +15,7 @@
     oauth1_random_string:t().
 
 
--define(BUCKET_NAME, <<"oauth1-nonce">>).
+-define(STORAGE_BUCKET, oauth1_config:get(storage_bucket_nonce)).
 
 
 -spec generate() ->
@@ -28,12 +28,12 @@ generate() ->
 store(<<T/binary>>) ->
     Key   = T,
     Value = <<>>,
-    oauth1_storage:put(?BUCKET_NAME, Key, Value).
+    oauth1_storage:put(?STORAGE_BUCKET, Key, Value).
 
 -spec fetch(t()) ->
     hope_result:t(ok, oauth1_storage:error()).
 fetch(<<T/binary>>) ->
-    case oauth1_storage:get(?BUCKET_NAME, T)
+    case oauth1_storage:get(?STORAGE_BUCKET, T)
     of  {error, _}=Error -> Error
     ;   {ok, <<>>}       -> {ok, ok}
     end.

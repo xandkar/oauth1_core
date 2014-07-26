@@ -23,7 +23,7 @@
     #t{}.
 
 
--define(STORAGE_BUCKET_NAME, <<"oauth1-callback">>).
+-define(STORAGE_BUCKET, oauth1_config:get(storage_bucket_callback)).
 
 
 -spec cons(oauth1_credentials:id(tmp), oauth1_uri:t()) ->
@@ -51,12 +51,12 @@ set_verifier(#t{uri=Uri1}=T, Verifier) ->
 store(#t{token = {tmp, <<Token/binary>>}, uri=Uri}) ->
     Key   = Token,
     Value = oauth1_uri:to_bin(Uri),
-    oauth1_storage:put(?STORAGE_BUCKET_NAME, Key, Value).
+    oauth1_storage:put(?STORAGE_BUCKET, Key, Value).
 
 -spec fetch(oauth1_credentials:id(tmp)) ->
     hope_result:t(t(), oauth1_storage:error()).
 fetch({tmp, <<Token/binary>>}) ->
-    case oauth1_storage:get(?STORAGE_BUCKET_NAME, Token)
+    case oauth1_storage:get(?STORAGE_BUCKET, Token)
     of  {error, _}=Error ->
             Error
     ;   {ok, UriBin} ->

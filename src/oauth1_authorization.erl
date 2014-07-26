@@ -34,8 +34,7 @@
     #t{}.
 
 
-% TODO: All bucket names should be defined at app config.
--define(STORAGE_BUCKET_NAME, <<"oauth1-authorizations">>).
+-define(STORAGE_BUCKET, oauth1_config:get(storage_bucket_authorization)).
 
 
 -spec cons(token()) ->
@@ -74,7 +73,7 @@ store(#t
 ) ->
     Key   = Token,
     Value = jsx:encode(Realms),
-    oauth1_storage:put(?STORAGE_BUCKET_NAME, Key, Value).
+    oauth1_storage:put(?STORAGE_BUCKET, Key, Value).
 
 -spec fetch(token()) ->
     hope_result:t(t(), Error)
@@ -83,7 +82,7 @@ store(#t
        .
 fetch({token, <<TokenID/binary>>}=Token) ->
     Key = TokenID,
-    case oauth1_storage:get(?STORAGE_BUCKET_NAME, Key)
+    case oauth1_storage:get(?STORAGE_BUCKET, Key)
     of  {error, _}=Error ->
             Error
     ;   {ok, RealmsJson} ->
