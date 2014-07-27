@@ -194,6 +194,7 @@ authorize(<<TmpTokenID/binary>>) ->
         , fun (#request_validation_state{}) ->
               case oauth1_callback:fetch(TmpToken)
               of  {error, not_found} ->
+                      % TODO: What if it isn't found simply due to latency?
                       error("No callback found for a valid tmp token!")
               ;   {error, _}=Error ->
                       Error
