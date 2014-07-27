@@ -320,21 +320,23 @@ validate_resource_request(#oauth1_server_args_validate_resource_request
        , CommonParams :: common_sig_params()
        .
 make_validate_signature(SigGiven, TokenTypeOpt, #common_sig_params
-{ method          = SigMeth
-, http_req_method = HttpMeth
-, http_req_host   = HttpHost
-, resource        = Resource
-, consumer_key    = ConsumerKey
-, timestamp       = Timestamp
-, nonce           = Nonce
-, callback        = CallbackOpt
-}) ->
+    { method          = SigMeth
+    , http_req_method = HttpMeth
+    , http_req_host   = HttpHost
+    , resource        = Resource
+    , consumer_key    = ConsumerKey
+    , timestamp       = Timestamp
+    , nonce           = Nonce
+    , callback        = CallbackOpt
+    }
+) ->
     fun (#request_validation_state
         { given_creds_client = {some, ClientCredentials}
         , given_creds_tmp    = GivenCredsTmpOpt
         , given_creds_token  = GivenCredsTokenOpt
         , given_verifier     = VerifierOpt
-        }=State) ->
+        }=State
+    ) ->
         TokenOpt =
             case TokenTypeOpt
             of  none          -> none
