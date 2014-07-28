@@ -154,11 +154,22 @@ initiate(#oauth1_server_args_initiate
         , nonce           = Nonce
         , callback        = {some, CallbackURI}
         },
+    RequestAuthorizationToAccessRealm =
+        fun (#request_validation_state{issued_creds_tmp={some, TmpTok}}=S) ->
+            Realm   = oauth1_resource:get_realm(Resource),
+            TokenID = oauth1_credentials:get_id(TmpTok),
+            AuthReq = oauth1_authorization_request:cons(ConsumerKey, TokenID, Realm),
+            case oauth1_authorization_request:store(AuthReq)
+            of  {error, _}=Error -> Error
+            ;   {ok, ok}         -> {ok, S}
+            end
+        end,
     Steps =
         [ make_validate_consumer_key(ConsumerKey)
         , make_validate_signature(SigGiven, none, CommonSigParams)
         , make_validate_nonce(Nonce)
         , make_issue_token(tmp)
+        , RequestAuthorizationToAccessRealm
         , fun (#request_validation_state{issued_creds_tmp={some, Token}}) ->
               TokenID  = oauth1_credentials:get_id(Token),
               Callback = oauth1_callback:cons(TokenID, CallbackURI),
@@ -189,9 +200,34 @@ initiate(#oauth1_server_args_initiate
        .
 authorize(<<TmpTokenID/binary>>) ->
     TmpToken = {tmp, TmpTokenID},
+    ApproveAuthRequest =
+        fun () ->
+            case oauth1_authorization_request:fetch(TmpToken)
+            of  {error, _}=Error ->
+                    Error
+            ;   {ok, AuthReq} ->
+                    Client = oauth1_authorization_request:get_client(AuthReq),
+                    Realm  = oauth1_authorization_request:get_realm(AuthReq),
+                    Approve =
+                        fun (Auths1) ->
+                            Auths2 = oauth1_authorizations:add(Auths1, Realm),
+                            oauth1_authorizations:store(Auths2)
+                        end,
+                    case oauth1_authorizations:fetch(Client)
+                    of  {error, not_found} ->
+                            Auths = oauth1_authorizations:cons(Client),
+                            Approve(Auths)
+                    ;   {error, _}=Error ->
+                            Error
+                    ;   {ok, Auths} ->
+                            Approve(Auths)
+                    end
+            end
+        end,
     Steps =
         [ make_validate_token_exists(TmpToken)
-        , fun (#request_validation_state{}) ->
+        , fun (#request_validation_state{}) -> ApproveAuthRequest() end
+        , fun (ok) ->
               case oauth1_callback:fetch(TmpToken)
               of  {error, not_found} ->
                       % TODO: What if it isn't found simply due to latency?
@@ -295,18 +331,33 @@ validate_resource_request(#oauth1_server_args_validate_resource_request
         , nonce           = Nonce
         , callback        = none
         },
+    CheckAuthorization =
+        fun () ->
+            ErrorUnauthorized = {error, {unauthorized, token_invalid}},
+            case oauth1_authorizations:fetch(ConsumerKey)
+            of  {error, not_found} ->
+                    % TODO: Log a warning
+                    ErrorUnauthorized
+            ;   {error, _}=Error ->
+                    Error
+            ;   {ok, Auths} ->
+                    Realm = oauth1_resource:get_realm(Resource),
+                    case oauth1_authorizations:is_authorized(Auths, Realm)
+                    of  false ->
+                            ErrorUnauthorized
+                    ;   true ->
+                            {ok, ok}
+                    end
+            end
+        end,
     Steps =
         [ make_validate_consumer_key(ConsumerKey)
         , make_validate_token_exists(TokenID)
         , make_validate_signature(SigGiven, {some, token}, CommonSigParams)
         , make_validate_nonce(Nonce)
+        , fun (#request_validation_state{}) -> CheckAuthorization() end
         ],
-    case hope_result:pipe(Steps, #request_validation_state{})
-    of  {error, _}=Error ->
-            Error
-    ;   {ok, #request_validation_state{}} ->
-            {ok, ok}
-    end.
+    hope_result:pipe(Steps, #request_validation_state{}).
 
 
 %%=============================================================================
