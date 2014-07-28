@@ -1,4 +1,4 @@
--module(oauth1_authorization).
+-module(oauth1_authorizations).
 
 -export_type(
     [ t/0
@@ -34,7 +34,7 @@
     #t{}.
 
 
--define(STORAGE_BUCKET, oauth1_config:get(storage_bucket_authorization)).
+-define(STORAGE_BUCKET, oauth1_config:get(storage_bucket_authorizations)).
 
 
 -spec cons(client()) ->
