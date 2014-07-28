@@ -19,14 +19,14 @@
     ]).
 
 
--type token() ::
-    oauth1_credentials:id(token).
+-type client() ::
+    oauth1_credentials:id(client).
 
 -type realm() ::
     binary().
 
 -record(t,
-    { token  :: token()
+    { client :: client()
     , realms :: [realm()]
     }).
 
@@ -37,11 +37,11 @@
 -define(STORAGE_BUCKET, oauth1_config:get(storage_bucket_authorization)).
 
 
--spec cons(token()) ->
+-spec cons(client()) ->
     t().
-cons({token, <<_/binary>>}=Token) ->
+cons({client, <<_/binary>>}=Client) ->
     #t
-    { token  = Token
+    { client = Client
     , realms = ordsets:new()
     }.
 
@@ -67,21 +67,21 @@ is_authorized(#t{realms=Realms}, Realm) ->
 -spec store(t()) ->
     hope_result:t(ok, oauth1_storage:error()).
 store(#t
-    { token  = {token, <<Token/binary>>}
+    { client = {client, <<Client/binary>>}
     , realms = Realms
     }
 ) ->
-    Key   = Token,
+    Key   = Client,
     Value = jsx:encode(Realms),
     oauth1_storage:put(?STORAGE_BUCKET, Key, Value).
 
--spec fetch(token()) ->
+-spec fetch(client()) ->
     hope_result:t(t(), Error)
     when Error :: oauth1_storage:error()
                 | {data_format_invalid, Data :: binary()}
        .
-fetch({token, <<TokenID/binary>>}=Token) ->
-    Key = TokenID,
+fetch({client, <<ClientID/binary>>}=Client) ->
+    Key = ClientID,
     case oauth1_storage:get(?STORAGE_BUCKET, Key)
     of  {error, _}=Error ->
             Error
@@ -95,7 +95,7 @@ fetch({token, <<TokenID/binary>>}=Token) ->
                     case lists:all(fun erlang:is_binary/1, Realms)
                     of  true ->
                             T = #t
-                                { token  = Token
+                                { client = Client
                                 , realms = Realms
                                 },
                             {ok, T}
