@@ -16,7 +16,7 @@ put(Bucket, Key, Value) ->
     try
         Insert()
     catch error:badarg ->
-        Table = ets:new(Table, [set, named_table]),
+        ok = table_create(Table),
         Insert()
     end.
 
@@ -38,3 +38,13 @@ get(Bucket, Key) ->
     atom().
 table_of_bucket(<<Bucket/binary>>) ->
     binary_to_atom(Bucket, utf8).
+
+-spec table_create(atom()) ->
+    ok.
+table_create(Name) ->
+    Options =
+        [ set
+        , named_table
+        ],
+    Name = ets:new(Name, Options),
+    ok.
