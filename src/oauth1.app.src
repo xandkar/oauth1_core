@@ -11,14 +11,14 @@
       , cowlib
       ]}
   , {env,
-      [ {storage_module                    , oauth1_storage_ets}
-      , {storage_bucket_callback           , <<"oauth1-callback">>}
-      , {storage_bucket_verifier           , <<"oauth1-verifier">>}
-      , {storage_bucket_authorizations     , <<"oauth1-authorizations">>}
-      , {storage_bucket_authorization_request, <<"oauth1-authorization-request">>}
-      , {storage_bucket_credentials_client , <<"oauth1-credentials-client">>}
-      , {storage_bucket_credentials_tmp    , <<"oauth1-credentials-tmp">>}
-      , {storage_bucket_credentials_token  , <<"oauth1-credentials-token">>}
-      , {storage_bucket_nonce              , <<"oauth1-nonce">>}
+      [ {storage_module                       , oauth1_storage_ets}
+      , {storage_bucket_callback              , <<"oauth1-callback">>}
+      , {storage_bucket_verifier              , <<"oauth1-verifier">>}
+      , {storage_bucket_authorizations        , <<"oauth1-authorizations">>}
+      , {storage_bucket_authorization_request , <<"oauth1-authorization-request">>}
+      , {storage_bucket_credentials_client    , <<"oauth1-credentials-client">>}
+      , {storage_bucket_credentials_tmp       , <<"oauth1-credentials-tmp">>}
+      , {storage_bucket_credentials_token     , <<"oauth1-credentials-token">>}
+      , {storage_bucket_nonce                 , <<"oauth1-nonce">>}
       ]}
   ]}.
