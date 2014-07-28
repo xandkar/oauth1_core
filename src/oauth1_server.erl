@@ -216,7 +216,7 @@ authorize(<<TmpTokenID/binary>>) ->
                       V  = Verifier,
                       C1 = Callback,
                       C2 = oauth1_callback:set_verifier(C1, V),
-                      oauth1_callback:get_uri(C2)
+                      {ok, oauth1_callback:get_uri(C2)}
               end
           end
         ],
