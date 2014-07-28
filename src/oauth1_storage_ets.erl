@@ -45,6 +45,8 @@ table_create(Name) ->
     Options =
         [ set
         , named_table
+        , {write_concurrency, true}
+        , { read_concurrency, true}
         ],
     Name = ets:new(Name, Options),
     ok.
