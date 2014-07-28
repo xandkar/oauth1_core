@@ -11,7 +11,7 @@
       , cowlib
       ]}
   , {env,
-      [ {storage_module        , oauth1_storage_ets}
+      [ {storage_module                    , oauth1_storage_ets}
       , {storage_bucket_callback           , <<"oauth1-callback">>}
       , {storage_bucket_verifier           , <<"oauth1-verifier">>}
       , {storage_bucket_authorizations     , <<"oauth1-authorizations">>}
