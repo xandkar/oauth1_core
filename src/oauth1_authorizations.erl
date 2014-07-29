@@ -71,9 +71,10 @@ store(#t
     , realms = Realms
     }
 ) ->
+    Bucket = ?STORAGE_BUCKET,
     Key   = Client,
     Value = jsx:encode(Realms),
-    oauth1_storage:put(?STORAGE_BUCKET, Key, Value).
+    oauth1_storage:put(Bucket, Key, Value).
 
 -spec fetch(client()) ->
     hope_result:t(t(), Error)
@@ -81,8 +82,9 @@ store(#t
                 | {data_format_invalid, Data :: binary()}
        .
 fetch({client, <<ClientID/binary>>}=Client) ->
+    Bucket = ?STORAGE_BUCKET,
     Key = ClientID,
-    case oauth1_storage:get(?STORAGE_BUCKET, Key)
+    case oauth1_storage:get(Bucket, Key)
     of  {error, _}=Error ->
             Error
     ;   {ok, RealmsJson} ->

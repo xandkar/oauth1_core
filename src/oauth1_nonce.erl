@@ -26,14 +26,16 @@ generate() ->
 -spec store(t()) ->
     hope_result:t(ok, oauth1_storage:error()).
 store(<<T/binary>>) ->
+    Bucket = ?STORAGE_BUCKET,
     Key   = T,
     Value = <<>>,
-    oauth1_storage:put(?STORAGE_BUCKET, Key, Value).
+    oauth1_storage:put(Bucket, Key, Value).
 
 -spec fetch(t()) ->
     hope_result:t(ok, oauth1_storage:error()).
 fetch(<<T/binary>>) ->
-    case oauth1_storage:get(?STORAGE_BUCKET, T)
+    Bucket = ?STORAGE_BUCKET,
+    case oauth1_storage:get(Bucket, T)
     of  {error, _}=Error -> Error
     ;   {ok, <<>>}       -> {ok, ok}
     end.

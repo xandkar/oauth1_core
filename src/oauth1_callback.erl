@@ -49,14 +49,16 @@ set_verifier(#t{uri=Uri1}=T, Verifier) ->
 -spec store(t()) ->
     hope_result:t(ok, oauth1_storage:error()).
 store(#t{token = {tmp, <<Token/binary>>}, uri=Uri}) ->
+    Bucket = ?STORAGE_BUCKET,
     Key   = Token,
     Value = oauth1_uri:to_bin(Uri),
-    oauth1_storage:put(?STORAGE_BUCKET, Key, Value).
+    oauth1_storage:put(Bucket, Key, Value).
 
 -spec fetch(oauth1_credentials:id(tmp)) ->
     hope_result:t(t(), oauth1_storage:error()).
 fetch({tmp, <<Token/binary>>}) ->
-    case oauth1_storage:get(?STORAGE_BUCKET, Token)
+    Bucket = ?STORAGE_BUCKET,
+    case oauth1_storage:get(Bucket, Token)
     of  {error, _}=Error ->
             Error
     ;   {ok, UriBin} ->
