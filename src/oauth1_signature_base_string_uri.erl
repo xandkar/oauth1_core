@@ -49,4 +49,5 @@
 -spec cons(?uri:t()) ->
     t().
 cons(URI) ->
-    ?uri:to_bin(URI).
+    URIBin = ?uri:to_bin(URI),
+    cow_qs:urlencode(URIBin).
