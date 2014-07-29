@@ -38,7 +38,6 @@ cons(#oauth1_signature_base_string_args_cons
     , callback         = CallbackOpt
     }
 ) ->
-    % TODO: Encoding
     URI           = ?resource:get_uri(Resource),
     BaseStringURI = ?signature_base_string_uri:cons(URI),
     TokenPair =
@@ -74,11 +73,14 @@ cons(#oauth1_signature_base_string_args_cons
         ++ TokenPair
         ++ VerifierPair
         ++ CallbackPair,
+    ParameterPairsEncoded =
+        [{encode(K), encode(V)}|| {K, V} <- ParameterPairs],
     ParameterSortComparator =
         fun ({K , V1}, {K , V2}) -> V1 =< V2
         ;   ({K1,  _}, {K2,  _}) -> K1 =< K2
         end,
-    ParameterPairsSorted = lists:sort(ParameterSortComparator, ParameterPairs),
+    ParameterPairsSorted =
+        lists:sort(ParameterSortComparator, ParameterPairsEncoded),
     ParameterAppend =
         fun ({K, V}, Acc) ->
             <<Acc/binary, K/binary, "=", V/binary>>
@@ -92,6 +94,12 @@ cons(#oauth1_signature_base_string_args_cons
     , ?AMPERSAND
     ,  ParametersString/binary
     >>.
+
+
+-spec encode(binary()) ->
+    binary().
+encode(<<String/binary>>) ->
+    cow_qs:urlencode(String).
 
 
 %% 3.4.1.  Signature Base String
