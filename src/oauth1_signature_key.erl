@@ -26,9 +26,6 @@ cons({client, <<ClientSecret/binary>>}, TokenSecretOpt) ->
         ;   {some, {tmp  , <<TokenSecret0/binary>>}} -> TokenSecret0
         ;   {some, {token, <<TokenSecret0/binary>>}} -> TokenSecret0
         end,
-    concat(ClientSecret, TokenSecret).
-
-concat(<<ClientSecret/binary>>, <<TokenSecret/binary>>) ->
     ClientSecretEncoded = cow_qs:urlencode(ClientSecret),
     TokenSecretEncoded  = cow_qs:urlencode(TokenSecret),
     <<ClientSecretEncoded/binary, "&", TokenSecretEncoded/binary>>.
