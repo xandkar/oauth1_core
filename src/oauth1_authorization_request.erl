@@ -63,8 +63,7 @@ get_realm(#t{realm = <<Realm/binary>>}) ->
 
 -spec store(t()) ->
     hope_result:t(ok, oauth1_storage:error()).
-store(
-    #t
+store(#t
     { client = {client, <<ClientID/binary>>}
     , token  = {tmp   , <<TokenID/binary>>}
     , realm  = <<Realm/binary>>

@@ -62,21 +62,22 @@ cons(#oauth1_signature_args_cons
         end,
     BaseStringArgs =
         #oauth1_signature_base_string_args_cons
-        { signature_method     = 'HMAC_SHA1'
-        , http_req_method      = HttpMeth
-        , http_req_host        = HttpHost
-        , resource             = Resource
-        , consumer_key         = ConsumerKey
-        , timestamp            = Timestamp
-        , nonce                = Nonce
+        { signature_method = 'HMAC_SHA1'
+        , http_req_method  = HttpMeth
+        , http_req_host    = HttpHost
+        , resource         = Resource
+        , consumer_key     = ConsumerKey
+        , timestamp        = Timestamp
+        , nonce            = Nonce
 
-        , token_id             = TokenIDOpt
-        , verifier             = VerifierOpt
-        , callback             = CallbackURIOpt
+        , token_id         = TokenIDOpt
+        , verifier         = VerifierOpt
+        , callback         = CallbackURIOpt
         },
-    Key = oauth1_signature_key:cons(ClientSharedSecret, TokenSharedSecretOpt),
-    Text = oauth1_signature_base_string:cons(BaseStringArgs),
-    DigestBin = crypto:hmac(sha, Key, Text),
+    TokShaSecOpt = TokenSharedSecretOpt,
+    Key          = oauth1_signature_key:cons(ClientSharedSecret, TokShaSecOpt),
+    Text         = oauth1_signature_base_string:cons(BaseStringArgs),
+    DigestBin    = crypto:hmac(sha, Key, Text),
     DigestBase64 = base64:encode(DigestBin),
     #t
     { method = Method

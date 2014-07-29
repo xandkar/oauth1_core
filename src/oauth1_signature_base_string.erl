@@ -24,17 +24,17 @@
 -spec cons(args_cons()) ->
     t().
 cons(#oauth1_signature_base_string_args_cons
-    { signature_method     = 'HMAC_SHA1'
-    , http_req_method      = HttpMeth
-    , http_req_host        = _HttpHost
-    , resource             = Resource
-    , consumer_key         = ConsumerKey
-    , timestamp            = Timestamp
-    , nonce                = Nonce
+    { signature_method = 'HMAC_SHA1'
+    , http_req_method  = HttpMeth
+    , http_req_host    = _HttpHost
+    , resource         = Resource
+    , consumer_key     = ConsumerKey
+    , timestamp        = Timestamp
+    , nonce            = Nonce
 
-    , token_id             = TokenIDOpt
-    , verifier             = VerifierOpt
-    , callback             = CallbackOpt
+    , token_id         = TokenIDOpt
+    , verifier         = VerifierOpt
+    , callback         = CallbackOpt
     }
 ) ->
     % TODO: Encoding

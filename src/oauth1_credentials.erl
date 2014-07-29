@@ -82,15 +82,18 @@ id_to_bin({_, ID}) ->
 
 -spec store(t(credentials_type())) ->
     hope_result:t(ok, oauth1_storage:error()).
-store(#t{id={Type, Key}, secret={Type, Value}}) ->
+store(#t{id={Type, <<ID/binary>>}, secret={Type, <<Secret/binary>>}}) ->
     Bucket = type_to_bucket(Type),
+    Key    = ID,
+    Value  = Secret,
     oauth1_storage:put(Bucket, Key, Value).
 
 -spec fetch(id(credentials_type())) ->
     hope_result:t(t(credentials_type()), oauth1_storage:error()).
 fetch({Type, <<ID/binary>>}) ->
     Bucket = type_to_bucket(Type),
-    case oauth1_storage:get(Bucket, ID)
+    Key    = ID,
+    case oauth1_storage:get(Bucket, Key)
     of  {error, _}=Error ->
             Error
     ;   {ok, Secret} ->

@@ -46,15 +46,22 @@ get_value(#t{verifier=Verifier}) ->
 
 -spec store(t()) ->
     hope_result:t(ok, oauth1_storage:error()).
-store(#t{temp_token={tmp, Key}, verifier=Value}) ->
+store(#t
+    { temp_token = {tmp, <<TokenID/binary>>}
+    , verifier   = <<Verifier/binary>>
+    }
+) ->
     Bucket = ?STORAGE_BUCKET,
+    Key    = TokenID,
+    Value  = Verifier,
     oauth1_storage:put(Bucket, Key, Value).
 
 -spec fetch(TempToken :: oauth1_credentials:id(tmp)) ->
     hope_result:t(t(), oauth1_storage:error()).
-fetch({tmp, <<Token/binary>>}=TempToken) ->
+fetch({tmp, <<TokenID/binary>>}=TempToken) ->
     Bucket = ?STORAGE_BUCKET,
-    case oauth1_storage:get(Bucket, Token)
+    Key    = TokenID,
+    case oauth1_storage:get(Bucket, Key)
     of  {error, _}=Error ->
             Error
     ;   {ok, Verifier} ->
