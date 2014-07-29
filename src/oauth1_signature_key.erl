@@ -30,5 +30,6 @@ cons({client, <<ClientSecret/binary>>}, TokenSecretOpt) ->
     end.
 
 concat(<<ClientSecret/binary>>, <<TokenSecret/binary>>) ->
-    % TODO: Percent-encode both secrets
-    <<ClientSecret/binary, "&", TokenSecret/binary>>.
+    ClientSecretEncoded = cow_qs:urlencode(ClientSecret),
+    TokenSecretEncoded  = cow_qs:urlencode(TokenSecret),
+    <<ClientSecretEncoded/binary, "&", TokenSecretEncoded/binary>>.
