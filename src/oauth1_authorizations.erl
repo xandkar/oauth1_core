@@ -72,8 +72,8 @@ store(#t
     }
 ) ->
     Bucket = ?STORAGE_BUCKET,
-    Key   = Client,
-    Value = jsx:encode(Realms),
+    Key    = Client,
+    Value  = jsx:encode(Realms),
     oauth1_storage:put(Bucket, Key, Value).
 
 -spec fetch(client()) ->
@@ -83,7 +83,7 @@ store(#t
        .
 fetch({client, <<ClientID/binary>>}=Client) ->
     Bucket = ?STORAGE_BUCKET,
-    Key = ClientID,
+    Key    = ClientID,
     case oauth1_storage:get(Bucket, Key)
     of  {error, _}=Error ->
             Error

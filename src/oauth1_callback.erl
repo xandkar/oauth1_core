@@ -50,8 +50,8 @@ set_verifier(#t{uri=Uri1}=T, Verifier) ->
     hope_result:t(ok, oauth1_storage:error()).
 store(#t{token = {tmp, <<Token/binary>>}, uri=Uri}) ->
     Bucket = ?STORAGE_BUCKET,
-    Key   = Token,
-    Value = oauth1_uri:to_bin(Uri),
+    Key    = Token,
+    Value  = oauth1_uri:to_bin(Uri),
     oauth1_storage:put(Bucket, Key, Value).
 
 -spec fetch(oauth1_credentials:id(tmp)) ->

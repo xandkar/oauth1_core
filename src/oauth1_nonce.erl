@@ -27,8 +27,8 @@ generate() ->
     hope_result:t(ok, oauth1_storage:error()).
 store(<<T/binary>>) ->
     Bucket = ?STORAGE_BUCKET,
-    Key   = T,
-    Value = <<>>,
+    Key    = T,
+    Value  = <<>>,
     oauth1_storage:put(Bucket, Key, Value).
 
 -spec fetch(t()) ->
