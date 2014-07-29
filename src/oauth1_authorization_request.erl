@@ -7,9 +7,14 @@
     ]).
 
 -export(
+    % Construct
     [ cons/3
+
+    % Access
     , get_client/1
     , get_realm/1
+
+    % Persist
     , store/1
     , fetch/1
     ]).

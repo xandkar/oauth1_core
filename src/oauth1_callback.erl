@@ -7,9 +7,14 @@
     ]).
 
 -export(
+    % Construct
     [ cons/2
+
+    % Access
     , set_verifier/2
     , get_uri/1
+
+    % Persist
     , store/1
     , fetch/1
     ]).

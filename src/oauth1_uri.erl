@@ -8,13 +8,18 @@
     ]).
 
 -export(
+    % Construct
     [ cons/1
+
+    % Access
+    , add_query/3
     , get_host/1
     , get_query/1
     , set_query/2
-    , add_query/3
-    , to_bin/1
+
+    % Serialize
     , of_bin/1
+    , to_bin/1
     ]).
 
 

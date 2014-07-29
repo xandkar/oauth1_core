@@ -7,7 +7,10 @@
     ]).
 
 -export(
+    % Construct
     [ generate/0
+
+    % Persist
     , store/1
     , fetch/1
     ]).

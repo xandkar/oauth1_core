@@ -7,8 +7,13 @@
     ]).
 
 -export(
+    % Construct
     [ generate/1
+
+    % Access
     , get_value/1
+
+    % Persist
     , fetch/1
     , store/1
     ]).

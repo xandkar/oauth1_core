@@ -10,10 +10,17 @@
     ]).
 
 -export(
+    % Construct
     [ generate/1
+
+    % Access
     , get_id/1
     , get_secret/1
+
+    % Serialize
     , id_to_bin/1
+
+    % Persist
     , store/1
     , fetch/1
     ]).

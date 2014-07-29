@@ -15,7 +15,8 @@
     binary().
 
 
--spec cons(ClientSharedSecret, hope_option:t(TokenSharedSecret)) -> t()
+-spec cons(ClientSharedSecret, hope_option:t(TokenSharedSecret)) ->
+    t()
     when ClientSharedSecret :: ?credentials:secret(client)
        , TokenSharedSecret  :: ?credentials:secret(tmp | token)
        .

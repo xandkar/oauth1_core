@@ -13,9 +13,12 @@
 
 -export(
     [ register_new_client/0
+
+    % API mimics the example endpoints in RFC 5849
     , initiate/1
     , authorize/1
     , token/1
+
     , validate_resource_request/1
     ]).
 

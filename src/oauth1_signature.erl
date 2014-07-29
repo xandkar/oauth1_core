@@ -11,7 +11,10 @@
     ]).
 
 -export(
+    % Construct
     [ cons/1
+
+    % Access
     , get_digest/1
     ]).
 
