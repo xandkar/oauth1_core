@@ -1,5 +1,6 @@
 -module(oauth1_signature).
 
+-include_lib("oauth1_module_abbreviations.hrl").
 -include_lib("oauth1_signature.hrl").
 -include_lib("oauth1_signature_base_string.hrl").
 
@@ -56,8 +57,8 @@ cons(#oauth1_signature_args_cons
         of  none ->
                 {none, none}
         ;   {some, Token} ->
-                TokenID     = oauth1_credentials:get_id(Token),
-                TokenSecret = oauth1_credentials:get_secret(Token),
+                TokenID     = ?credentials:get_id(Token),
+                TokenSecret = ?credentials:get_secret(Token),
                 {{some, TokenID}, {some, TokenSecret}}
         end,
     BaseStringArgs =
@@ -75,8 +76,8 @@ cons(#oauth1_signature_args_cons
         , callback         = CallbackURIOpt
         },
     TokShaSecOpt = TokenSharedSecretOpt,
-    Key          = oauth1_signature_key:cons(ClientSharedSecret, TokShaSecOpt),
-    Text         = oauth1_signature_base_string:cons(BaseStringArgs),
+    Key          = ?signature_key:cons(ClientSharedSecret, TokShaSecOpt),
+    Text         = ?signature_base_string:cons(BaseStringArgs),
     DigestBin    = crypto:hmac(sha, Key, Text),
     DigestBase64 = base64:encode(DigestBin),
     #t

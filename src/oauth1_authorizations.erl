@@ -1,5 +1,7 @@
 -module(oauth1_authorizations).
 
+-include_lib("oauth1_module_abbreviations.hrl").
+
 -export_type(
     [ t/0
     ]).
@@ -20,7 +22,7 @@
 
 
 -type client() ::
-    oauth1_credentials:id(client).
+    ?credentials:id(client).
 
 -type realm() ::
     binary().
@@ -34,7 +36,7 @@
     #t{}.
 
 
--define(STORAGE_BUCKET, oauth1_config:get(storage_bucket_authorizations)).
+-define(STORAGE_BUCKET, ?config:get(storage_bucket_authorizations)).
 
 
 -spec cons(client()) ->
@@ -65,7 +67,7 @@ is_authorized(#t{realms=Realms}, Realm) ->
     ordsets:is_element(Realm, Realms).
 
 -spec store(t()) ->
-    hope_result:t(ok, oauth1_storage:error()).
+    hope_result:t(ok, ?storage:error()).
 store(#t
     { client = {client, <<Client/binary>>}
     , realms = Realms
@@ -74,17 +76,17 @@ store(#t
     Bucket = ?STORAGE_BUCKET,
     Key    = Client,
     Value  = jsx:encode(Realms),
-    oauth1_storage:put(Bucket, Key, Value).
+    ?storage:put(Bucket, Key, Value).
 
 -spec fetch(client()) ->
     hope_result:t(t(), Error)
-    when Error :: oauth1_storage:error()
+    when Error :: ?storage:error()
                 | {data_format_invalid, Data :: binary()}
        .
 fetch({client, <<ClientID/binary>>}=Client) ->
     Bucket = ?STORAGE_BUCKET,
     Key    = ClientID,
-    case oauth1_storage:get(Bucket, Key)
+    case ?storage:get(Bucket, Key)
     of  {error, _}=Error ->
             Error
     ;   {ok, RealmsJson} ->

@@ -1,5 +1,7 @@
 -module(oauth1_nonce).
 
+-include_lib("oauth1_module_abbreviations.hrl").
+
 -export_type(
     [ t/0
     ]).
@@ -12,30 +14,30 @@
 
 
 -type t() ::
-    oauth1_random_string:t().
+    ?random_string:t().
 
 
--define(STORAGE_BUCKET, oauth1_config:get(storage_bucket_nonce)).
+-define(STORAGE_BUCKET, ?config:get(storage_bucket_nonce)).
 
 
 -spec generate() ->
-    hope_result:t(t(), oauth1_random_string:error()).
+    hope_result:t(t(), ?random_string:error()).
 generate() ->
-    oauth1_random_string:generate().
+    ?random_string:generate().
 
 -spec store(t()) ->
-    hope_result:t(ok, oauth1_storage:error()).
+    hope_result:t(ok, ?storage:error()).
 store(<<T/binary>>) ->
     Bucket = ?STORAGE_BUCKET,
     Key    = T,
     Value  = <<>>,
-    oauth1_storage:put(Bucket, Key, Value).
+    ?storage:put(Bucket, Key, Value).
 
 -spec fetch(t()) ->
-    hope_result:t(ok, oauth1_storage:error()).
+    hope_result:t(ok, ?storage:error()).
 fetch(<<T/binary>>) ->
     Bucket = ?STORAGE_BUCKET,
-    case oauth1_storage:get(Bucket, T)
+    case ?storage:get(Bucket, T)
     of  {error, _}=Error -> Error
     ;   {ok, <<>>}       -> {ok, ok}
     end.

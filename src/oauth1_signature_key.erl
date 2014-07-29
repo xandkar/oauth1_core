@@ -1,5 +1,7 @@
 -module(oauth1_signature_key).
 
+-include_lib("oauth1_module_abbreviations.hrl").
+
 -export_type(
     [ t/0
     ]).
@@ -14,8 +16,8 @@
 
 
 -spec cons(ClientSharedSecret, hope_option:t(TokenSharedSecret)) -> t()
-    when ClientSharedSecret :: oauth1_credentials:secret(client)
-       , TokenSharedSecret  :: oauth1_credentials:secret(tmp | token)
+    when ClientSharedSecret :: ?credentials:secret(client)
+       , TokenSharedSecret  :: ?credentials:secret(tmp | token)
        .
 cons({client, <<ClientSecret/binary>>}, TokenSecretOpt) ->
     case TokenSecretOpt

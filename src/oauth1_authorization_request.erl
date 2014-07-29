@@ -1,5 +1,7 @@
 -module(oauth1_authorization_request).
 
+-include_lib("oauth1_module_abbreviations.hrl").
+
 -export_type(
     [ t/0
     ]).
@@ -14,10 +16,10 @@
 
 
 -type client() ::
-    oauth1_credentials:id(client).
+    ?credentials:id(client).
 
 -type token() ::
-    oauth1_credentials:id(tmp).
+    ?credentials:id(tmp).
 
 -type realm() ::
     binary().
@@ -32,9 +34,8 @@
     #t{}.
 
 
--define( STORAGE_BUCKET
-       , oauth1_config:get(storage_bucket_authorization_request)
-       ).
+-define(STORAGE_BUCKET, ?config:get(storage_bucket_authorization_request)).
+
 -define(JSON_KEY_CLIENT, <<"client">>).
 -define(JSON_KEY_REALM , <<"realm">>).
 
@@ -62,7 +63,7 @@ get_realm(#t{realm = <<Realm/binary>>}) ->
     Realm.
 
 -spec store(t()) ->
-    hope_result:t(ok, oauth1_storage:error()).
+    hope_result:t(ok, ?storage:error()).
 store(#t
     { client = {client, <<ClientID/binary>>}
     , token  = {tmp   , <<TokenID/binary>>}
@@ -76,14 +77,14 @@ store(#t
     Bucket = ?STORAGE_BUCKET,
     Key    = TokenID,
     Value  = jsx:encode(Props),
-    oauth1_storage:put(Bucket, Key, Value).
+    ?storage:put(Bucket, Key, Value).
 
 -spec fetch(token()) ->
-    hope_result:t(t(), oauth1_storage:error()).
+    hope_result:t(t(), ?storage:error()).
 fetch({tmp, <<TokenID/binary>>}=Token) ->
     Bucket = ?STORAGE_BUCKET,
     Key    = TokenID,
-    case oauth1_storage:get(Bucket, Key)
+    case ?storage:get(Bucket, Key)
     of  {error, _}=Error ->
             Error
     ;   {ok, Data} ->

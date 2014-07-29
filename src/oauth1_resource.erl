@@ -1,5 +1,7 @@
 -module(oauth1_resource).
 
+-include_lib("oauth1_module_abbreviations.hrl").
+
 -export_type(
     [ t/0
     , realm/0
@@ -20,7 +22,7 @@
     binary().
 
 -type uri() ::
-    oauth1_uri:t().
+    ?uri:t().
 
 -record(t,
     { realm :: realm()

@@ -1,5 +1,6 @@
 -module(oauth1_signature_base_string).
 
+-include_lib("oauth1_module_abbreviations.hrl").
 -include_lib("oauth1_signature_base_string.hrl").
 
 -export_type(
@@ -38,8 +39,8 @@ cons(#oauth1_signature_base_string_args_cons
     }
 ) ->
     % TODO: Encoding
-    URI           = oauth1_resource:get_uri(Resource),
-    BaseStringURI = oauth1_signature_base_string_uri:cons(URI),
+    URI           = ?resource:get_uri(Resource),
+    BaseStringURI = ?signature_base_string_uri:cons(URI),
     TokenPair =
         case TokenIDOpt
         of  none                      -> []
@@ -51,7 +52,7 @@ cons(#oauth1_signature_base_string_args_cons
         of  none ->
                 []
         ;   {some, Verifier} ->
-                VerifierBin = oauth1_verifier:get_value(Verifier),
+                VerifierBin = ?verifier:get_value(Verifier),
                 [{<<"oauth_verifier">>, VerifierBin}]
         end,
     CallbackPair =
@@ -59,14 +60,14 @@ cons(#oauth1_signature_base_string_args_cons
         of  none ->
                 []
         ;   {some, Callback} ->
-                CallbackBin = oauth1_signature_base_string_uri:cons(Callback),
+                CallbackBin = ?signature_base_string_uri:cons(Callback),
                 [{<<"oauth_callback">>, CallbackBin}]
         end,
-    QueryPairs = oauth1_uri:get_query(URI),
+    QueryPairs = ?uri:get_query(URI),
     ParameterPairs =
         [ {<<"oauth_signature_method">> , <<"HMAC-SHA1">>}
-        , {<<"oauth_consumer_key">>     , oauth1_credentials:id_to_bin(ConsumerKey)}
-        , {<<"oauth_timestamp">>        , oauth1_timestamp:to_bin(Timestamp)}
+        , {<<"oauth_consumer_key">>     , ?credentials:id_to_bin(ConsumerKey)}
+        , {<<"oauth_timestamp">>        , ?timestamp:to_bin(Timestamp)}
         , {<<"oauth_nonce">>            , Nonce}
         | QueryPairs
         ]

@@ -1,5 +1,7 @@
 -module(oauth1_verifier).
 
+-include_lib("oauth1_module_abbreviations.hrl").
+
 -export_type(
     [ t/0
     ]).
@@ -13,7 +15,7 @@
 
 
 -record(t,
-    { temp_token  :: oauth1_credentials:id(tmp)
+    { temp_token  :: ?credentials:id(tmp)
     , verifier    :: binary()
     }).
 
@@ -21,13 +23,13 @@
     #t{}.
 
 
--define(STORAGE_BUCKET, oauth1_config:get(storage_bucket_verifier)).
+-define(STORAGE_BUCKET, ?config:get(storage_bucket_verifier)).
 
 
--spec generate(oauth1_credentials:id(tmp)) ->
-    hope_result:t(t(), oauth1_random_string:error()).
+-spec generate(?credentials:id(tmp)) ->
+    hope_result:t(t(), ?random_string:error()).
 generate(TempToken) ->
-    case oauth1_random_string:generate()
+    case ?random_string:generate()
     of  {error, _}=Error ->
             Error
     ;   {ok, RandomString} ->
@@ -45,7 +47,7 @@ get_value(#t{verifier=Verifier}) ->
 
 
 -spec store(t()) ->
-    hope_result:t(ok, oauth1_storage:error()).
+    hope_result:t(ok, ?storage:error()).
 store(#t
     { temp_token = {tmp, <<TokenID/binary>>}
     , verifier   = <<Verifier/binary>>
@@ -54,14 +56,14 @@ store(#t
     Bucket = ?STORAGE_BUCKET,
     Key    = TokenID,
     Value  = Verifier,
-    oauth1_storage:put(Bucket, Key, Value).
+    ?storage:put(Bucket, Key, Value).
 
--spec fetch(TempToken :: oauth1_credentials:id(tmp)) ->
-    hope_result:t(t(), oauth1_storage:error()).
+-spec fetch(TempToken :: ?credentials:id(tmp)) ->
+    hope_result:t(t(), ?storage:error()).
 fetch({tmp, <<TokenID/binary>>}=TempToken) ->
     Bucket = ?STORAGE_BUCKET,
     Key    = TokenID,
-    case oauth1_storage:get(Bucket, Key)
+    case ?storage:get(Bucket, Key)
     of  {error, _}=Error ->
             Error
     ;   {ok, Verifier} ->

@@ -1,5 +1,6 @@
 -module(oauth1_server).
 
+-include_lib("oauth1_module_abbreviations.hrl").
 -include_lib("oauth1_server.hrl").
 -include_lib("oauth1_signature.hrl").
 
@@ -55,14 +56,14 @@
     #oauth1_server_args_validate_resource_request{}.
 
 -record(request_validation_state,
-    { given_creds_client  = none :: hope_option:t(oauth1_credentials:t(client))
-    , given_creds_tmp     = none :: hope_option:t(oauth1_credentials:t(tmp))
-    , given_creds_token   = none :: hope_option:t(oauth1_credentials:t(token))
+    { given_creds_client  = none :: hope_option:t(?credentials:t(client))
+    , given_creds_tmp     = none :: hope_option:t(?credentials:t(tmp))
+    , given_creds_token   = none :: hope_option:t(?credentials:t(token))
 
-    , issued_creds_tmp    = none :: hope_option:t(oauth1_credentials:t(tmp))
-    , issued_creds_token  = none :: hope_option:t(oauth1_credentials:t(token))
+    , issued_creds_tmp    = none :: hope_option:t(?credentials:t(tmp))
+    , issued_creds_token  = none :: hope_option:t(?credentials:t(token))
 
-    , given_verifier      = none :: hope_option:t(oauth1_verifier:t())
+    , given_verifier      = none :: hope_option:t(?verifier:t())
     }).
 
 -type request_validation_state() ::
@@ -71,21 +72,21 @@
 -type request_validator() ::
     fun((request_validation_state()) ->
             hope_result:t( request_validation_state()
-                         , oauth1_storage:error()
+                         , ?storage:error()
                          | error()
-                         | oauth1_random_string:error()
+                         | ?random_string:error()
                          )
     ).
 
 -record(common_sig_params,
-    { method               :: oauth1_signature:method()
+    { method               :: ?signature:method()
     , http_req_method      :: binary()
     , http_req_host        :: binary()
-    , resource             :: oauth1_resource:t()
-    , consumer_key         :: oauth1_credentials:id(client)
-    , timestamp            :: oauth1_timestamp:t()
-    , nonce                :: oauth1_nonce:t()
-    , callback      = none :: hope_option:t(oauth1_uri:t())
+    , resource             :: ?resource:t()
+    , consumer_key         :: ?credentials:id(client)
+    , timestamp            :: ?timestamp:t()
+    , nonce                :: ?nonce:t()
+    , callback      = none :: hope_option:t(?uri:t())
     }).
 
 -type common_sig_params() ::
@@ -102,19 +103,19 @@
     hope_result:t({ID, Secret}, Error)
     when ID     :: binary()
        , Secret :: binary()
-       , Error  :: oauth1_storage:error()
-                 | oauth1_random_string:error()
+       , Error  :: ?storage:error()
+                 | ?random_string:error()
        .
 register_new_client() ->
-    case oauth1_credentials:generate(client)
+    case ?credentials:generate(client)
     of  {error, _}=Error ->
             Error
     ;   {ok, ClientCredentials} ->
-            case oauth1_credentials:store(ClientCredentials)
+            case ?credentials:store(ClientCredentials)
             of  {ok, ok} ->
                     Pair =
-                        { oauth1_credentials:get_id(ClientCredentials)
-                        , oauth1_credentials:get_secret(ClientCredentials)
+                        { ?credentials:get_id(ClientCredentials)
+                        , ?credentials:get_secret(ClientCredentials)
                         },
                     {ok, Pair}
             ;   {error, _}=Error ->
@@ -126,9 +127,9 @@ register_new_client() ->
 %% @end
 -spec initiate(args_initiate()) ->
     hope_result:t(Ok, Error)
-    when Ok    :: {oauth1_credentials:t(tmp), CallbackConfirmed :: boolean()}
-       , Error :: oauth1_storage:error()
-                | oauth1_random_string:error()
+    when Ok    :: {?credentials:t(tmp), CallbackConfirmed :: boolean()}
+       , Error :: ?storage:error()
+                | ?random_string:error()
                 | error()
        .
 initiate(#oauth1_server_args_initiate
@@ -156,10 +157,10 @@ initiate(#oauth1_server_args_initiate
         },
     RequestAuthorizationToAccessRealm =
         fun (#request_validation_state{issued_creds_tmp={some, TmpTok}}=S) ->
-            Realm   = oauth1_resource:get_realm(Resource),
-            TokenID = oauth1_credentials:get_id(TmpTok),
-            AuthReq = oauth1_authorization_request:cons(ConsumerKey, TokenID, Realm),
-            case oauth1_authorization_request:store(AuthReq)
+            Realm   = ?resource:get_realm(Resource),
+            TokenID = ?credentials:get_id(TmpTok),
+            AuthReq = ?authorization_request:cons(ConsumerKey, TokenID, Realm),
+            case ?authorization_request:store(AuthReq)
             of  {error, _}=Error -> Error
             ;   {ok, ok}         -> {ok, S}
             end
@@ -171,9 +172,9 @@ initiate(#oauth1_server_args_initiate
         , make_issue_token(tmp)
         , RequestAuthorizationToAccessRealm
         , fun (#request_validation_state{issued_creds_tmp={some, Token}}) ->
-              TokenID  = oauth1_credentials:get_id(Token),
-              Callback = oauth1_callback:cons(TokenID, CallbackURI),
-              case oauth1_callback:store(Callback)
+              TokenID  = ?credentials:get_id(Token),
+              Callback = ?callback:cons(TokenID, CallbackURI),
+              case ?callback:store(Callback)
               of  {error, _}=Error ->
                       Error
               ;   {ok, ok} ->
@@ -193,29 +194,29 @@ initiate(#oauth1_server_args_initiate
 %% @end
 -spec authorize(TmpToken :: binary()) ->
     hope_result:t(Ok, Error)
-    when Ok    :: oauth1_uri:t()
-       , Error :: oauth1_storage:error()
-                | oauth1_random_string:error()
+    when Ok    :: ?uri:t()
+       , Error :: ?storage:error()
+                | ?random_string:error()
                 | error()
        .
 authorize(<<TmpTokenID/binary>>) ->
     TmpToken = {tmp, TmpTokenID},
     ApproveAuthRequest =
         fun () ->
-            case oauth1_authorization_request:fetch(TmpToken)
+            case ?authorization_request:fetch(TmpToken)
             of  {error, _}=Error ->
                     Error
             ;   {ok, AuthReq} ->
-                    Client = oauth1_authorization_request:get_client(AuthReq),
-                    Realm  = oauth1_authorization_request:get_realm(AuthReq),
+                    Client = ?authorization_request:get_client(AuthReq),
+                    Realm  = ?authorization_request:get_realm(AuthReq),
                     Approve =
                         fun (Auths1) ->
-                            Auths2 = oauth1_authorizations:add(Auths1, Realm),
-                            oauth1_authorizations:store(Auths2)
+                            Auths2 = ?authorizations:add(Auths1, Realm),
+                            ?authorizations:store(Auths2)
                         end,
-                    case oauth1_authorizations:fetch(Client)
+                    case ?authorizations:fetch(Client)
                     of  {error, not_found} ->
-                            Auths = oauth1_authorizations:cons(Client),
+                            Auths = ?authorizations:cons(Client),
                             Approve(Auths)
                     ;   {error, _}=Error ->
                             Error
@@ -228,7 +229,7 @@ authorize(<<TmpTokenID/binary>>) ->
         [ make_validate_token_exists(TmpToken)
         , fun (#request_validation_state{}) -> ApproveAuthRequest() end
         , fun (ok) ->
-              case oauth1_callback:fetch(TmpToken)
+              case ?callback:fetch(TmpToken)
               of  {error, not_found} ->
                       % TODO: What if it isn't found simply due to latency?
                       error("No callback found for a valid tmp token!")
@@ -239,20 +240,20 @@ authorize(<<TmpTokenID/binary>>) ->
               end
           end
         , fun (Callback) ->
-              case oauth1_verifier:generate(TmpToken)
+              case ?verifier:generate(TmpToken)
               of  {error, _}=Error -> Error
               ;   {ok, Verifier}   -> {ok, {Callback, Verifier}}
               end
           end
         , fun ({Callback, Verifier}) ->
-              case oauth1_verifier:store(Verifier)
+              case ?verifier:store(Verifier)
               of  {error, _}=Error ->
                       Error
               ;   {ok, ok} ->
                       V  = Verifier,
                       C1 = Callback,
-                      C2 = oauth1_callback:set_verifier(C1, V),
-                      {ok, oauth1_callback:get_uri(C2)}
+                      C2 = ?callback:set_verifier(C1, V),
+                      {ok, ?callback:get_uri(C2)}
               end
           end
         ],
@@ -262,8 +263,8 @@ authorize(<<TmpTokenID/binary>>) ->
 %% @end
 -spec token(args_token()) ->
     hope_result:t(Ok, Error)
-    when Ok    :: oauth1_credentials:t(token)
-       , Error :: oauth1_storage:error()
+    when Ok    :: ?credentials:t(token)
+       , Error :: ?storage:error()
                 | error()
        .
 token(#oauth1_server_args_token
@@ -307,7 +308,7 @@ token(#oauth1_server_args_token
 
 -spec validate_resource_request(args_validate_resource_request()) ->
     hope_result:t(ok, Error)
-    when Error :: oauth1_storage:error()
+    when Error :: ?storage:error()
                 | error()
        .
 validate_resource_request(#oauth1_server_args_validate_resource_request
@@ -334,15 +335,15 @@ validate_resource_request(#oauth1_server_args_validate_resource_request
     CheckAuthorization =
         fun () ->
             ErrorUnauthorized = {error, {unauthorized, token_invalid}},
-            case oauth1_authorizations:fetch(ConsumerKey)
+            case ?authorizations:fetch(ConsumerKey)
             of  {error, not_found} ->
                     % TODO: Log a warning
                     ErrorUnauthorized
             ;   {error, _}=Error ->
                     Error
             ;   {ok, Auths} ->
-                    Realm = oauth1_resource:get_realm(Resource),
-                    case oauth1_authorizations:is_authorized(Auths, Realm)
+                    Realm = ?resource:get_realm(Resource),
+                    case ?authorizations:is_authorized(Auths, Realm)
                     of  false ->
                             ErrorUnauthorized
                     ;   true ->
@@ -394,7 +395,7 @@ make_validate_signature(SigGiven, TokenTypeOpt, #common_sig_params
             ;   {some, tmp}   -> {some, _} = GivenCredsTmpOpt
             ;   {some, token} -> {some, _} = GivenCredsTokenOpt
             end,
-        ClientSharedSecret = oauth1_credentials:get_secret(ClientCredentials),
+        ClientSharedSecret = ?credentials:get_secret(ClientCredentials),
         SigArgs =
             #oauth1_signature_args_cons
             { method               = SigMeth
@@ -411,32 +412,32 @@ make_validate_signature(SigGiven, TokenTypeOpt, #common_sig_params
             , verifier             = VerifierOpt
             , callback             = CallbackOpt
             },
-        SigComputed       = oauth1_signature:cons(SigArgs),
-        SigComputedDigest = oauth1_signature:get_digest(SigComputed),
+        SigComputed       = ?signature:cons(SigArgs),
+        SigComputedDigest = ?signature:get_digest(SigComputed),
         case SigGiven =:= SigComputedDigest
         of  false -> {error, {unauthorized, signature_invalid}}
         ;   true  -> {ok, State}
         end
     end.
 
--spec make_validate_nonce(oauth1_nonce:t()) ->
+-spec make_validate_nonce(?nonce:t()) ->
     request_validator().
 make_validate_nonce(Nonce) ->
     fun (#request_validation_state{}=State) ->
-        case oauth1_nonce:fetch(Nonce)
+        case ?nonce:fetch(Nonce)
         of  {ok, ok}           -> {error, {unauthorized, nonce_used}}
         ;   {error, not_found} -> {ok, State}
         end
     end.
 
--spec make_validate_consumer_key(oauth1_credentials:id(client)) ->
+-spec make_validate_consumer_key(?credentials:id(client)) ->
     request_validator().
 make_validate_consumer_key({client, <<_/binary>>}=ConsumerKey) ->
     make_validate_token_exists(ConsumerKey).
 
--spec make_validate_token_exists(oauth1_credentials:id(Type)) ->
+-spec make_validate_token_exists(?credentials:id(Type)) ->
     request_validator()
-    when Type :: oauth1_credentials:credentials_type().
+    when Type :: ?credentials:credentials_type().
 make_validate_token_exists({Type, <<_/binary>>}=TokenID) ->
     fun (#request_validation_state{}=State) ->
         SetCredsClient =
@@ -456,7 +457,7 @@ make_validate_token_exists({Type, <<_/binary>>}=TokenID) ->
             end,
         ErrorInvalidClient = {error,{unauthorized,client_credentials_invalid}},
         ErrorInvalidToken  = {error,{unauthorized,token_invalid}},
-        case {oauth1_credentials:fetch(TokenID), Type}
+        case {?credentials:fetch(TokenID), Type}
         of  {{error, not_found}, client} -> ErrorInvalidClient
         ;   {{error, not_found}, tmp}    -> ErrorInvalidToken
         ;   {{error, not_found}, token}  -> ErrorInvalidToken
@@ -467,15 +468,15 @@ make_validate_token_exists({Type, <<_/binary>>}=TokenID) ->
         end
     end.
 
--spec make_validate_verifier(binary(), oauth1_credentials:id(tmp)) ->
+-spec make_validate_verifier(binary(), ?credentials:id(tmp)) ->
     request_validator().
 make_validate_verifier(VerifierGivenBin, TmpTokenID) ->
     fun (#request_validation_state{}=State1) ->
-        case oauth1_verifier:fetch(TmpTokenID)
+        case ?verifier:fetch(TmpTokenID)
         of  {error, not_found} ->
                 {error, {unauthorized, verifier_invalid}}
         ;   {ok, Verifier} ->
-                VerifierBin = oauth1_verifier:get_value(Verifier),
+                VerifierBin = ?verifier:get_value(Verifier),
                 case VerifierGivenBin =:= VerifierBin
                 of  false ->
                         {error, {unauthorized, verifier_invalid}}
@@ -492,11 +493,11 @@ make_validate_verifier(VerifierGivenBin, TmpTokenID) ->
 -spec make_issue_token(tmp | token) -> request_validator().
 make_issue_token(Type) ->
     fun (#request_validation_state{}=State1) ->
-        case oauth1_credentials:generate(Type)
+        case ?credentials:generate(Type)
         of  {error, _}=Error ->
                 Error
         ;   {ok, Token} ->
-                case oauth1_credentials:store(Token)
+                case ?credentials:store(Token)
                 of  {error, _}=Error ->
                         Error
                 ;   {ok, ok} ->

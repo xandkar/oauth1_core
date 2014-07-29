@@ -1,5 +1,7 @@
 -module(oauth1_signature_base_string_uri).
 
+-include_lib("oauth1_module_abbreviations.hrl").
+
 -export_type(
     [ t/0
     ]).
@@ -44,7 +46,7 @@
 %%
 %%    is represented by the base string URI:
 %%    "https://www.example.net:8080/".
--spec cons(oauth1_uri:t()) ->
+-spec cons(?uri:t()) ->
     t().
 cons(URI) ->
-    oauth1_uri:to_bin(URI).
+    ?uri:to_bin(URI).

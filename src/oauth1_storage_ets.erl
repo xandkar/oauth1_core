@@ -2,6 +2,8 @@
 
 -behavior(oauth1_storage).
 
+-include_lib("oauth1_module_abbreviations.hrl").
+
 -export(
     [ put/3
     , get/2
@@ -9,7 +11,7 @@
 
 
 -spec put(binary(), binary(), binary()) ->
-    hope_result:t(ok, oauth1_storage:error()).
+    hope_result:t(ok, ?storage:error()).
 put(Bucket, Key, Value) ->
     Table = table_of_bucket(Bucket),
     Insert = fun () -> true = ets:insert(Table, {Key, Value}), {ok, ok} end,
@@ -21,7 +23,7 @@ put(Bucket, Key, Value) ->
     end.
 
 -spec get(binary(), binary()) ->
-    hope_result:t(binary(), oauth1_storage:error()).
+    hope_result:t(binary(), ?storage:error()).
 get(Bucket, Key) ->
     Table = table_of_bucket(Bucket),
     try

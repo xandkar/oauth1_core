@@ -1,5 +1,7 @@
 -module(oauth1_credentials).
 
+-include_lib("oauth1_module_abbreviations.hrl").
+
 -export_type(
     [ t/1
     , credentials_type/0
@@ -24,10 +26,10 @@
     .
 
 -type id(CredentialsType) ::
-    {CredentialsType, oauth1_random_string:t()}.
+    {CredentialsType, ?random_string:t()}.
 
 -type secret(CredentialsType) ::
-    {CredentialsType, oauth1_random_string:t()}.
+    {CredentialsType, ?random_string:t()}.
 
 -record(t,
     { id     :: id(credentials_type())
@@ -44,12 +46,12 @@
 
 
 -spec generate(Type) ->
-    hope_result:t(t(Type), oauth1_random_string:error())
+    hope_result:t(t(Type), ?random_string:error())
     when Type :: credentials_type().
 generate(Type) ->
     Generate =
         fun (Acc) ->
-            case oauth1_random_string:generate()
+            case ?random_string:generate()
             of  {ok, RandomString} -> {ok, [RandomString | Acc]}
             ;   {error, _}=Error   -> Error
             end
@@ -81,19 +83,19 @@ id_to_bin({_, ID}) ->
     ID.
 
 -spec store(t(credentials_type())) ->
-    hope_result:t(ok, oauth1_storage:error()).
+    hope_result:t(ok, ?storage:error()).
 store(#t{id={Type, <<ID/binary>>}, secret={Type, <<Secret/binary>>}}) ->
     Bucket = type_to_bucket(Type),
     Key    = ID,
     Value  = Secret,
-    oauth1_storage:put(Bucket, Key, Value).
+    ?storage:put(Bucket, Key, Value).
 
 -spec fetch(id(credentials_type())) ->
-    hope_result:t(t(credentials_type()), oauth1_storage:error()).
+    hope_result:t(t(credentials_type()), ?storage:error()).
 fetch({Type, <<ID/binary>>}) ->
     Bucket = type_to_bucket(Type),
     Key    = ID,
-    case oauth1_storage:get(Bucket, Key)
+    case ?storage:get(Bucket, Key)
     of  {error, _}=Error ->
             Error
     ;   {ok, Secret} ->
@@ -111,6 +113,6 @@ fetch({Type, <<ID/binary>>}) ->
 
 -spec type_to_bucket(credentials_type()) ->
     binary().
-type_to_bucket(client) -> oauth1_config:get(storage_bucket_credentials_client);
-type_to_bucket(tmp)    -> oauth1_config:get(storage_bucket_credentials_tmp);
-type_to_bucket(token)  -> oauth1_config:get(storage_bucket_credentials_token).
+type_to_bucket(client) -> ?config:get(storage_bucket_credentials_client);
+type_to_bucket(tmp)    -> ?config:get(storage_bucket_credentials_tmp);
+type_to_bucket(token)  -> ?config:get(storage_bucket_credentials_token).
