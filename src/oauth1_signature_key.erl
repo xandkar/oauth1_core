@@ -20,14 +20,13 @@
        , TokenSharedSecret  :: ?credentials:secret(tmp | token)
        .
 cons({client, <<ClientSecret/binary>>}, TokenSecretOpt) ->
-    case TokenSecretOpt
-    of  none ->
-            concat(ClientSecret, <<>>)
-    ;   {some, {tmp  , <<TokenSecret/binary>>}} ->
-            concat(ClientSecret, TokenSecret)
-    ;   {some, {token, <<TokenSecret/binary>>}} ->
-            concat(ClientSecret, TokenSecret)
-    end.
+    TokenSecret =
+        case TokenSecretOpt
+        of  none                                     -> <<>>
+        ;   {some, {tmp  , <<TokenSecret0/binary>>}} -> TokenSecret0
+        ;   {some, {token, <<TokenSecret0/binary>>}} -> TokenSecret0
+        end,
+    concat(ClientSecret, TokenSecret).
 
 concat(<<ClientSecret/binary>>, <<TokenSecret/binary>>) ->
     ClientSecretEncoded = cow_qs:urlencode(ClientSecret),
