@@ -457,14 +457,14 @@ make_validate_token_exists({Type, <<_/binary>>}=TokenID) ->
             end,
         ErrorInvalidClient = {error,{unauthorized,client_credentials_invalid}},
         ErrorInvalidToken  = {error,{unauthorized,token_invalid}},
-        case {?credentials:fetch(TokenID), Type}
-        of  {{error, not_found}, client} -> ErrorInvalidClient
-        ;   {{error, not_found}, tmp}    -> ErrorInvalidToken
-        ;   {{error, not_found}, token}  -> ErrorInvalidToken
-        ;   {{error, _}=Error, _}        -> Error
-        ;   {{ok, Creds}, client}        -> {ok, SetCredsClient(Creds)}
-        ;   {{ok, Creds}, tmp}           -> {ok, SetCredsTmp   (Creds)}
-        ;   {{ok, Creds}, token}         -> {ok, SetCredsToken (Creds)}
+        case {Type, ?credentials:fetch(TokenID)}
+        of  {client , {error, not_found}} -> ErrorInvalidClient
+        ;   {tmp    , {error, not_found}} -> ErrorInvalidToken
+        ;   {token  , {error, not_found}} -> ErrorInvalidToken
+        ;   {_      , {error, _}=Error}   -> Error
+        ;   {client , {ok, Creds}}        -> {ok, SetCredsClient(Creds)}
+        ;   {tmp    , {ok, Creds}}        -> {ok, SetCredsTmp   (Creds)}
+        ;   {token  , {ok, Creds}}        -> {ok, SetCredsToken (Creds)}
         end
     end.
 
