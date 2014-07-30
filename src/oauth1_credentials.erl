@@ -7,7 +7,7 @@
     , credentials_type/0
     , id/1
     , secret/1
-    , parsing_error/0
+    , retrival_error/0
     ]).
 
 -export(
@@ -43,6 +43,7 @@
 -record(t,
     { id     :: id(credentials_type())
     , secret :: secret(credentials_type())
+    , expiry :: hope_option:t(?timestamp:t())
     }).
 
 %% t() is really meant to be opaque, but alas - Dialyzer does not (yet) support
@@ -54,7 +55,11 @@
     }.
 
 -type parsing_error() ::
-    {data_format_invalid, binary()}
+    {data_format_invalid, binary()}.
+
+-type retrival_error() ::
+      {internal, parsing_error()}
+    | token_expired
     .
 
 -type t_prop_key() ::
@@ -62,6 +67,8 @@
 
 -type t_prop_value() ::
       binary()
+    | non_neg_integer()
+    | null
     .
 
 -type t_props() ::
@@ -71,6 +78,7 @@
 -define(PROP_KEY_TYPE   , <<"type">>).
 -define(PROP_KEY_ID     , <<"id">>).
 -define(PROP_KEY_SECRET , <<"secret">>).
+-define(PROP_KEY_EXPIRY , <<"expiry">>).
 
 
 -spec generate(Type) ->
@@ -88,9 +96,11 @@ generate(Type) ->
     of  {error, _}=Error ->
             Error
     ;   {ok, [RandomString1, RandomString2]} ->
+            ExpiryOpt = get_expiry_opt(Type),
             T = #t
                 { id     = {Type, RandomString1}
                 , secret = {Type, RandomString2}
+                , expiry = ExpiryOpt
                 },
             {ok, T}
     end.
@@ -133,19 +143,50 @@ store(#t{id={Type, <<ID/binary>>}}=T) ->
     ?storage:put(Bucket, Key, Value).
 
 -spec fetch(id(credentials_type())) ->
-    hope_result:t(t(credentials_type()), ?storage:error()).
+    hope_result:t(t(credentials_type()), ?storage:error() | retrival_error()).
 fetch({Type, <<ID/binary>>}) ->
     Bucket = type_to_bucket(Type),
     Key    = ID,
     case ?storage:get(Bucket, Key)
-    of  {error, _}=Error -> Error
-    ;   {ok, Value}      -> of_bin(Value)
+    of  {error, _}=Error ->
+            Error
+    ;   {ok, Value} ->
+            case of_bin(Value)
+            of  {error, {data_format_invalid, _}=ParsingError} ->
+                    {error, {internal, ParsingError}}
+            ;   {ok, #t{expiry=ExpiryOpt}=T} ->
+                    ExpiryToOkOrError =
+                        fun (Expiry) ->
+                            case Expiry > ?timestamp:get()
+                            of  true  -> {ok, T}
+                            ;   false -> {error, token_expired}
+                            end
+                        end,
+                    case {Type, ExpiryOpt}
+                    of  {client, none}           -> {ok, T}
+                    ;   {tmp   , {some, Expiry}} -> ExpiryToOkOrError(Expiry)
+                    ;   {token , {some, Expiry}} -> ExpiryToOkOrError(Expiry)
+                    end
+            end
     end.
 
 
 %% ============================================================================
 %% Helpers
 %% ============================================================================
+
+-spec get_expiry_opt(credentials_type()) ->
+    hope_option:t(non_neg_integer()).
+get_expiry_opt(client) ->
+    none;
+get_expiry_opt(Type) ->
+    TTL =
+        case Type
+        of  token -> ?config:get(token_ttl_seconds)
+        ;   tmp   -> ?config:get(tmptoken_ttl_seconds)
+        end,
+    Timestamp = ?timestamp:get(),
+    {some, Timestamp + TTL}.
 
 -spec type_to_bucket(credentials_type()) ->
     binary().
@@ -189,12 +230,14 @@ of_bin(<<Data/binary>>) ->
 to_props(#t
     { id     = {Type, <<ID/binary>>}
     , secret = {Type, <<Secret/binary>>}
+    , expiry = Expiry
     }
 ) ->
     TypeBin = type_to_bin(Type),
     [ {?PROP_KEY_TYPE   , TypeBin}
     , {?PROP_KEY_ID     , ID}
     , {?PROP_KEY_SECRET , Secret}
+    , {?PROP_KEY_EXPIRY , Expiry}
     ].
 
 -spec of_props(t_props()) ->
@@ -213,13 +256,15 @@ of_props(Props) ->
         [ ?PROP_KEY_TYPE
         , ?PROP_KEY_ID
         , ?PROP_KEY_SECRET
+        , ?PROP_KEY_EXPIRY
         ],
     FieldGetters = lists:map(MakeFieldGetter, Fields),
     case hope_result:pipe(FieldGetters, [])
     of  {error, _}=Error ->
             Error
     ;   { ok
-        , [ <<Secret/binary>>
+        , [ ExpiryOrNull
+          , <<Secret/binary>>
           , <<ID/binary>>
           , <<TypeBin/binary>>
           ]
@@ -228,9 +273,15 @@ of_props(Props) ->
             of  {error, _}=Error ->
                     Error
             ;   {ok, Type} ->
+                    ExpiryOpt =
+                        case ExpiryOrNull
+                        of  null   -> none
+                        ;   Expiry -> {some, Expiry}
+                        end,
                     T = #t
                         { id     = {Type, <<ID/binary>>}
                         , secret = {Type, <<Secret/binary>>}
+                        , expiry = ExpiryOpt
                         },
                     {ok, T}
             end

@@ -20,5 +20,7 @@
       , {storage_bucket_credentials_tmp       , <<"oauth1-credentials-tmp">>}
       , {storage_bucket_credentials_token     , <<"oauth1-credentials-token">>}
       , {storage_bucket_nonce                 , <<"oauth1-nonce">>}
+      , {   token_ttl_seconds                 , 86400}
+      , {tmptoken_ttl_seconds                 , 3600}
       ]}
   ]}.

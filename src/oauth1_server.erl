@@ -78,7 +78,7 @@
                          , ?storage:error()
                          | error()
                          | ?random_string:error()
-                         | ?credentials:parsing_error()
+                         | ?credentials:retrival_error()
                          )
     ).
 
@@ -129,7 +129,7 @@ register_new_client() ->
     when Ok    :: {?credentials:t(tmp), CallbackConfirmed :: boolean()}
        , Error :: ?storage:error()
                 | ?random_string:error()
-                | ?credentials:parsing_error()
+                | ?credentials:retrival_error()
                 | error()
        .
 initiate(#oauth1_server_args_initiate
@@ -265,7 +265,7 @@ authorize(<<TmpTokenID/binary>>) ->
     hope_result:t(Ok, Error)
     when Ok    :: ?credentials:t(token)
        , Error :: ?storage:error()
-                | ?credentials:parsing_error()
+                | ?credentials:retrival_error()
                 | error()
        .
 token(#oauth1_server_args_token
@@ -310,7 +310,7 @@ token(#oauth1_server_args_token
 -spec validate_resource_request(args_validate_resource_request()) ->
     hope_result:t(ok, Error)
     when Error :: ?storage:error()
-                | ?credentials:parsing_error()
+                | ?credentials:retrival_error()
                 | error()
        .
 validate_resource_request(#oauth1_server_args_validate_resource_request
@@ -459,10 +459,13 @@ make_validate_token_exists({Type, <<_/binary>>}=TokenID) ->
             end,
         ErrorInvalidClient = {error,{unauthorized,client_credentials_invalid}},
         ErrorInvalidToken  = {error,{unauthorized,token_invalid}},
+        ErrorExpiredToken  = {error,{unauthorized,token_expired}},
         case {Type, ?credentials:fetch(TokenID)}
         of  {client , {error, not_found}} -> ErrorInvalidClient
         ;   {tmp    , {error, not_found}} -> ErrorInvalidToken
         ;   {token  , {error, not_found}} -> ErrorInvalidToken
+        ;   {tmp    , {error, token_expired}} -> ErrorExpiredToken
+        ;   {token  , {error, token_expired}} -> ErrorExpiredToken
         ;   {_      , {error, _}=Error}   -> Error
         ;   {client , {ok, Creds}}        -> {ok, SetCredsClient(Creds)}
         ;   {tmp    , {ok, Creds}}        -> {ok, SetCredsTmp   (Creds)}
