@@ -12,6 +12,7 @@
 -export(
     % Construct
     [ generate/1
+    , generate_and_store/1
 
     % Access
     , get_id/1
@@ -72,6 +73,20 @@ generate(Type) ->
                 , secret = {Type, RandomString2}
                 },
             {ok, T}
+    end.
+
+-spec generate_and_store(Type) ->
+    hope_result:t(t(Type), ?random_string:error() | ?storage:error())
+    when Type :: credentials_type().
+generate_and_store(Type) ->
+    case generate(Type)
+    of  {error, _}=Error ->
+            Error
+    ;   {ok, T} ->
+            case store(T)
+            of  {error, _}=Error -> Error
+            ;   {ok, ok}         -> {ok, T}
+            end
     end.
 
 -spec get_id(t(credentials_type())) ->

@@ -110,20 +110,15 @@
                  | ?random_string:error()
        .
 register_new_client() ->
-    case ?credentials:generate(client)
+    case ?credentials:generate_and_store(client)
     of  {error, _}=Error ->
             Error
     ;   {ok, ClientCredentials} ->
-            case ?credentials:store(ClientCredentials)
-            of  {ok, ok} ->
-                    Pair =
-                        { ?credentials:get_id(ClientCredentials)
-                        , ?credentials:get_secret(ClientCredentials)
-                        },
-                    {ok, Pair}
-            ;   {error, _}=Error ->
-                    Error
-            end
+            Pair =
+                { ?credentials:get_id(ClientCredentials)
+                , ?credentials:get_secret(ClientCredentials)
+                },
+            {ok, Pair}
     end.
 
 %% @doc Initiate a resource access grant transaction.
@@ -496,24 +491,19 @@ make_validate_verifier(VerifierGivenBin, TmpTokenID) ->
 -spec make_issue_token(tmp | token) -> request_validator().
 make_issue_token(Type) ->
     fun (#request_validation_state{}=State1) ->
-        case ?credentials:generate(Type)
+        case ?credentials:generate_and_store(Type)
         of  {error, _}=Error ->
                 Error
         ;   {ok, Token} ->
-                case ?credentials:store(Token)
-                of  {error, _}=Error ->
-                        Error
-                ;   {ok, ok} ->
-                        State2 =
-                            case Type
-                            of  tmp ->
-                                    State1#request_validation_state
-                                    {issued_creds_tmp = {some, Token}}
-                            ;   token ->
-                                    State1#request_validation_state
-                                    {issued_creds_token = {some, Token}}
-                            end,
-                        {ok, State2}
-                end
+                State2 =
+                    case Type
+                    of  tmp ->
+                            State1#request_validation_state
+                            {issued_creds_tmp = {some, Token}}
+                    ;   token ->
+                            State1#request_validation_state
+                            {issued_creds_token = {some, Token}}
+                    end,
+                {ok, State2}
         end
     end.
