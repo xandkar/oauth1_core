@@ -78,6 +78,7 @@
                          , ?storage:error()
                          | error()
                          | ?random_string:error()
+                         | ?credentials:parsing_error()
                          )
     ).
 
@@ -128,6 +129,7 @@ register_new_client() ->
     when Ok    :: {?credentials:t(tmp), CallbackConfirmed :: boolean()}
        , Error :: ?storage:error()
                 | ?random_string:error()
+                | ?credentials:parsing_error()
                 | error()
        .
 initiate(#oauth1_server_args_initiate
@@ -263,6 +265,7 @@ authorize(<<TmpTokenID/binary>>) ->
     hope_result:t(Ok, Error)
     when Ok    :: ?credentials:t(token)
        , Error :: ?storage:error()
+                | ?credentials:parsing_error()
                 | error()
        .
 token(#oauth1_server_args_token
@@ -307,6 +310,7 @@ token(#oauth1_server_args_token
 -spec validate_resource_request(args_validate_resource_request()) ->
     hope_result:t(ok, Error)
     when Error :: ?storage:error()
+                | ?credentials:parsing_error()
                 | error()
        .
 validate_resource_request(#oauth1_server_args_validate_resource_request
