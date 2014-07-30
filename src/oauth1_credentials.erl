@@ -55,7 +55,9 @@
     }.
 
 -type parsing_error() ::
-    {data_format_invalid, binary()}.
+      {data_format_invalid, binary()}
+    | {field_missing      , binary()}
+    .
 
 -type retrival_error() ::
       {internal, parsing_error()}
@@ -154,6 +156,8 @@ fetch({Type, <<ID/binary>>}) ->
             case of_bin(Value)
             of  {error, {data_format_invalid, _}=ParsingError} ->
                     {error, {internal, ParsingError}}
+            ;   {error, {field_missing, _}=ParsingError} ->
+                    {error, {internal, ParsingError}}
             ;   {ok, #t{expiry=ExpiryOpt}=T} ->
                     ExpiryToOkOrError =
                         fun (Expiry) ->
@@ -243,6 +247,7 @@ to_props(#t
 -spec of_props(t_props()) ->
     hope_result:t(t(credentials_type()), parsing_error()).
 of_props(Props) ->
+    % TODO: Check for all missing fields, not just the first.
     MakeFieldGetter =
         fun (Key) ->
             fun (Acc) ->
