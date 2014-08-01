@@ -4,6 +4,7 @@
 	deps-get \
 	deps-update \
 	compile \
+	tests \
 	clean \
 	dialyze
 
@@ -24,6 +25,9 @@ deps-update:
 
 compile:
 	@rebar compile
+
+tests:
+	@rebar ct skip_deps=true verbose=1
 
 clean:
 	@rebar clean
