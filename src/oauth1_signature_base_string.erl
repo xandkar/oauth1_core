@@ -80,12 +80,20 @@ cons(#oauth1_signature_base_string_args_cons
         ;   ({K1,  _}, {K2,  _}) -> K1 =< K2
         end,
     ParameterPairsSorted =
-        lists:sort(ParameterSortComparator, ParameterPairsEncoded),
-    ParameterAppend =
-        fun ({K, V}, Acc) ->
-            <<Acc/binary, K/binary, "=", V/binary>>
+        lists:usort(ParameterSortComparator, ParameterPairsEncoded),
+    ParametersString =
+        case ParameterPairsSorted
+        of  [] ->
+                <<>>
+        ;   [{K1, V1} | Pairs] ->
+                ParameterAppend =
+                    fun ({K, V}, Acc) ->
+                        <<Acc/binary, "&", K/binary, "=", V/binary>>
+                    end,
+                String1 = <<K1/binary, "=", V1/binary>>,
+                String2 = lists:foldl(ParameterAppend, String1, Pairs),
+                encode(String2)
         end,
-    ParametersString = lists:foldl(ParameterAppend, <<>>, ParameterPairsSorted),
     % TODO: ParametersFromHttpEntityBody = ... ,
     %
     << HttpMeth/binary
