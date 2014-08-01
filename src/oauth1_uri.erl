@@ -143,8 +143,13 @@ of_bin(<<URIString/binary>>) ->
     case http_uri:parse(binary_to_list(URIString))
     of  {error, _}=Error ->
             Error
-    ;   {ok, {Scheme, UserInfo, Host, Port, Path, Query}}
+    ;   {ok, {Scheme, UserInfo, Host, Port, Path, QueryMaybeWithQuestionMark}}
         when Scheme =:= http orelse Scheme =:= https ->
+            Query =
+                case QueryMaybeWithQuestionMark
+                of  [$? | Query0] -> Query0
+                ;         Query0  -> Query0
+                end,
             UserInfoOpt =
                 case UserInfo
                 of  []    -> none
