@@ -14,8 +14,12 @@
     % Construct
     [ cons/1
 
-    % Access
+    % Access (normal usage)
     , get_digest/1
+
+    % Access (for tests)
+    , get_key/1
+    , get_text/1
     ]).
 
 
@@ -27,6 +31,8 @@
 
 -record(t,
     { method :: method()
+    , key    :: binary()
+    , text   :: binary()
     , digest :: digest()
     }).
 
@@ -85,6 +91,8 @@ cons(#oauth1_signature_args_cons
     DigestBase64 = base64:encode(DigestBin),
     #t
     { method = Method
+    , key    = Key
+    , text   = Text
     , digest = DigestBase64
     }.
 
@@ -92,3 +100,13 @@ cons(#oauth1_signature_args_cons
     digest().
 get_digest(#t{digest=Digest}) ->
     Digest.
+
+-spec get_key(t()) ->
+    binary().
+get_key(#t{key=Key}) ->
+    Key.
+
+-spec get_text(t()) ->
+    binary().
+get_text(#t{text=Text}) ->
+    Text.
