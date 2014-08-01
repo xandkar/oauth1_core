@@ -11,9 +11,12 @@
     ]).
 
 -export(
-    % Construct
+    % Construct (normal usage)
     [ generate/1
     , generate_and_store/1
+
+    % Construct (for tests)
+    , cons/3
 
     % Access
     , get_id/1
@@ -82,6 +85,20 @@
 -define(PROP_KEY_SECRET , <<"secret">>).
 -define(PROP_KEY_EXPIRY , <<"expiry">>).
 
+
+-spec cons(Type, ID, Secret) ->
+    t(Type)
+    when Type   :: credentials_type()
+       , ID     :: binary()
+       , Secret :: binary()
+       .
+cons(Type, <<ID/binary>>, <<Secret/binary>>) ->
+    ExpiryOpt = get_expiry_opt(Type),
+    #t
+    { id     = {Type, ID}
+    , secret = {Type, Secret}
+    , expiry = ExpiryOpt
+    }.
 
 -spec generate(Type) ->
     hope_result:t(t(Type), ?random_string:error())
