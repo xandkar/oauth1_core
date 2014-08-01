@@ -93,7 +93,7 @@ cons(#oauth1_signature_args_cons
     { method = Method
     , key    = Key
     , text   = Text
-    , digest = DigestBase64
+    , digest = cow_qs:urlencode(DigestBase64)
     }.
 
 -spec get_digest(t()) ->
