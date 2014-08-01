@@ -94,6 +94,8 @@ t_hueniverse_guide_key(Config) ->
     {some, Sig} = kvl_find(Config, ?STATE_KEY_SIG),
     KeyExpected = <<"kd94hf93k423kf44&pfkkdhi9sl3r4s00">>,
     KeyComputed = oauth1_signature:get_key(Sig),
+    ct:log("KeyExpected: ~p", [KeyExpected]),
+    ct:log("KeyComputed: ~p", [KeyComputed]),
     KeyComputed = KeyExpected.
 
 t_hueniverse_guide_base_string(Config) ->
