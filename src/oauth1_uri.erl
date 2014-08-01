@@ -20,6 +20,7 @@
     % Serialize
     , of_bin/1
     , to_bin/1
+    , to_bin/2  % Explicitly choose weather to include query parameters.
     ]).
 
 
@@ -90,6 +91,11 @@ add_query(#t{query=Query1}=T, <<Key/binary>>, <<Value/binary>>) ->
 
 -spec to_bin(t()) ->
     binary().
+to_bin(#t{}=T) ->
+    to_bin(T, include_query).
+
+-spec to_bin(t(), include_query | do_not_include_query) ->
+    binary().
 to_bin(#t
     { scheme = Scheme
     , user   = User
@@ -97,7 +103,8 @@ to_bin(#t
     , port   = Port
     , path   = Path
     , query  = Query
-    }
+    },
+    QueryInclusion
 ) ->
     UserOrEmpty =
         case User
@@ -113,15 +120,21 @@ to_bin(#t
                 <<":", PortBin/binary>>
         end,
     SchemeBin = scheme_to_bin(Scheme),
-    QueryBin  = cow_qs:qs(Query),
+    QueryParametersOrEmpty =
+        case QueryInclusion
+        of  include_query ->
+                QueryBin = cow_qs:qs(Query),
+                <<"?", QueryBin/binary>>
+        ;   do_not_include_query ->
+                <<>>
+        end,
     << SchemeBin/binary
     ,  "://"
     ,  UserOrEmpty/binary
     ,  Host/binary
     ,  PortOrEmpty/binary
     ,  Path/binary
-    ,  "?"
-    ,  QueryBin/binary
+    ,  QueryParametersOrEmpty/binary
     >>.
 
 -spec of_bin(binary()) ->
@@ -146,7 +159,7 @@ of_bin(<<URIString/binary>>) ->
                 , host   = HostBin
                 , port   = Port
                 , path   = PathBin
-                , query  = cow_qs:parse_qs(QueryBin)
+                , query  = lists:reverse(cow_qs:parse_qs(QueryBin))
                 },
             {ok, T}
 
