@@ -1,4 +1,5 @@
 .PHONY: \
+	ci \
 	fresh-build \
 	deps \
 	deps-get \
@@ -6,6 +7,12 @@
 	compile \
 	tests \
 	clean \
+	dialyze
+
+ci: \
+	deps \
+	compile \
+	tests \
 	dialyze
 
 fresh-build: \

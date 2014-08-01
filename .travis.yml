@@ -1,0 +1,10 @@
+notifications:
+    recipients:
+    - siraaj@khandkar.net
+
+otp_release:
+    - 17.0
+    - R16B02
+
+script:
+    "make ci"
