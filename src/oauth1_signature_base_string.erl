@@ -36,6 +36,8 @@ cons(#oauth1_signature_base_string_args_cons
     , token_id         = TokenIDOpt
     , verifier         = VerifierOpt
     , callback         = CallbackOpt
+
+    , version          = VersionOpt
     }
 ) ->
     URI           = ?resource:get_uri(Resource),
@@ -62,6 +64,11 @@ cons(#oauth1_signature_base_string_args_cons
                 CallbackBin = ?signature_base_string_uri:cons(Callback),
                 [{<<"oauth_callback">>, CallbackBin}]
         end,
+    VersionPair =
+        case VersionOpt
+        of  {some, '1.0'} -> [{<<"oauth_version">>, <<"1.0">>}]
+        ;   none          -> []
+        end,
     QueryPairs = ?uri:get_query(URI),
     ParameterPairs =
         [ {<<"oauth_signature_method">> , <<"HMAC-SHA1">>}
@@ -70,6 +77,7 @@ cons(#oauth1_signature_base_string_args_cons
         , {<<"oauth_nonce">>            , Nonce}
         | QueryPairs
         ]
+        ++ VersionPair
         ++ TokenPair
         ++ VerifierPair
         ++ CallbackPair,

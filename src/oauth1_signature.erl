@@ -59,6 +59,8 @@ cons(#oauth1_signature_args_cons
     , token                = TokenOpt
     , verifier             = VerifierOpt
     , callback             = CallbackURIOpt
+
+    , version              = VersionOpt
     }
 ) ->
     {TokenIDOpt, TokenSharedSecretOpt} =
@@ -83,6 +85,8 @@ cons(#oauth1_signature_args_cons
         , token_id         = TokenIDOpt
         , verifier         = VerifierOpt
         , callback         = CallbackURIOpt
+
+        , version          = VersionOpt
         },
     TokShaSecOpt = TokenSharedSecretOpt,
     Key          = ?signature_key:cons(ClientSharedSecret, TokShaSecOpt),

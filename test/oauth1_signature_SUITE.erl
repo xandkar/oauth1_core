@@ -76,6 +76,8 @@ init_per_group(?GROUP_HUENIVERSE_GUIDE, Config) ->
         , token                = {some, Token}
         , verifier             = none
         , callback             = none
+
+        , version              = {some, '1.0'}
         },
     Sig = oauth1_signature:cons(SigArgs),
     orddict:store(?STATE_KEY_SIG, Sig, Config).

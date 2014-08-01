@@ -91,6 +91,7 @@
     , timestamp            :: ?timestamp:t()
     , nonce                :: ?nonce:t()
     , callback      = none :: hope_option:t(?uri:t())
+    , version       = none :: hope_option:t('1.0')
     }).
 
 -type common_sig_params() ::
@@ -143,6 +144,8 @@ initiate(#oauth1_server_args_initiate
     , client_callback_uri = CallbackURI
 
     , host                = Host
+
+    , version             = VersionOpt
     }
 ) ->
     CommonSigParams = #common_sig_params
@@ -154,6 +157,7 @@ initiate(#oauth1_server_args_initiate
         , timestamp       = Timestamp
         , nonce           = Nonce
         , callback        = {some, CallbackURI}
+        , version         = VersionOpt
         },
     RequestAuthorizationToAccessRealm =
         fun (#request_validation_state{issued_creds_tmp={some, TmpTok}}=S) ->
@@ -280,6 +284,7 @@ token(#oauth1_server_args_token
     , verifier         = <<VerifierGivenBin/binary>>
 
     , host             = Host
+    , version          = VersionOpt
     }
 ) ->
     CommonSigParams = #common_sig_params
@@ -291,6 +296,7 @@ token(#oauth1_server_args_token
         , timestamp       = Timestamp
         , nonce           = Nonce
         , callback        = none
+        , version         = VersionOpt
         },
     Steps =
         [ make_validate_consumer_key(ConsumerKey)
@@ -322,6 +328,7 @@ validate_resource_request(#oauth1_server_args_validate_resource_request
     , nonce            = Nonce
     , token            = TokenID
     , host             = Host
+    , version          = VersionOpt
     }
 ) ->
     CommonSigParams = #common_sig_params
@@ -333,6 +340,7 @@ validate_resource_request(#oauth1_server_args_validate_resource_request
         , timestamp       = Timestamp
         , nonce           = Nonce
         , callback        = none
+        , version         = VersionOpt
         },
     CheckAuthorization =
         fun () ->
@@ -382,6 +390,7 @@ make_validate_signature(SigGiven, TokenTypeOpt, #common_sig_params
     , timestamp       = Timestamp
     , nonce           = Nonce
     , callback        = CallbackOpt
+    , version         = VersionOpt
     }
 ) ->
     fun (#request_validation_state
@@ -413,6 +422,8 @@ make_validate_signature(SigGiven, TokenTypeOpt, #common_sig_params
             , token                = TokenOpt
             , verifier             = VerifierOpt
             , callback             = CallbackOpt
+
+            , version              = VersionOpt
             },
         SigComputed       = ?signature:cons(SigArgs),
         SigComputedDigest = ?signature:get_digest(SigComputed),

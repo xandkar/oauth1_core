@@ -10,4 +10,6 @@
     , token_id      = none :: hope_option:t(oauth1_credentials:id(tmp | token))
     , verifier      = none :: hope_option:t(oauth1_verifier:t())
     , callback      = none :: hope_option:t(oauth1_uri:t())
+
+    , version       = none :: hope_option:t('1.0')
     }).

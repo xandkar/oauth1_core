@@ -11,6 +11,8 @@
     , client_callback_uri :: oauth1_uri:t()
 
     , host                :: binary()
+
+    , version      = none :: hope_option:t('1.0')
     }).
 
 -record(oauth1_server_args_token,
@@ -28,6 +30,8 @@
     , verifier         :: binary()
 
     , host             :: binary()
+
+    , version   = none :: hope_option:t('1.0')
     }).
 
 -record(oauth1_server_args_validate_resource_request,
@@ -40,4 +44,6 @@
     , token            :: oauth1_credentials:id(token)
 
     , host             :: binary()
+
+    , version   = none :: hope_option:t('1.0')
     }).
