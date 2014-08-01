@@ -1,6 +1,10 @@
 .PHONY: \
 	fresh-build \
-	compile clean \
+	deps \
+	deps-get \
+	deps-update \
+	compile \
+	clean \
 	dialyze
 
 fresh-build: \
