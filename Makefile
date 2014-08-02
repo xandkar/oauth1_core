@@ -4,7 +4,7 @@
 	deps \
 	deps-get \
 	deps-update \
-	download_plt \
+	select_plt \
 	compile \
 	tests \
 	clean \
@@ -14,11 +14,11 @@ ci: \
 	deps \
 	compile \
 	tests \
-	download_plt \
+	select_plt \
 	dialyze
 
-download_plt:
-	@./download_plt
+select_plt:
+	@./plt/select.sh
 
 fresh-build: \
 	clean \
