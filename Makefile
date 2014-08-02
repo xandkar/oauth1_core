@@ -6,14 +6,14 @@
 	deps-update \
 	select_plt \
 	compile \
-	tests \
+	test \
 	clean \
 	dialyze
 
 ci: \
 	deps \
 	compile \
-	tests
+	test
 
 select_plt:
 	@./plt/select.sh
@@ -36,7 +36,7 @@ deps-update:
 compile:
 	@rebar compile
 
-tests:
+test:
 	@rebar ct skip_deps=true verbose=1
 
 clean:
