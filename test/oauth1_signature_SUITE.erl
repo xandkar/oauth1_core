@@ -20,7 +20,7 @@
     ]).
 
 
--define(GROUP_HUENIVERSE_GUIDE, case_hueniverse_guide).
+-define(CASE_GROUP_HUENIVERSE_GUIDE, case_hueniverse_guide).
 -define(APP_DEPS,
     [ crypto
     , cowlib
@@ -36,10 +36,10 @@
 %%=============================================================================
 
 all() ->
-    [{group, ?GROUP_HUENIVERSE_GUIDE}].
+    [{group, ?CASE_GROUP_HUENIVERSE_GUIDE}].
 
 groups() ->
-    [ group_hueniverse_guide()
+    [ spec_for_case_group_hueniverse_guide()
     ].
 
 init_per_suite(Config) ->
@@ -51,7 +51,7 @@ end_per_suite(_Config) ->
     StopApp = fun (App) -> ok = application:stop(App) end,
     ok = lists:foreach(StopApp, lists:reverse(?APP_DEPS)).
 
-init_per_group(?GROUP_HUENIVERSE_GUIDE, Config) ->
+init_per_group(?CASE_GROUP_HUENIVERSE_GUIDE, Config) ->
     % Test case based on:
     % https://web.archive.org/web/20131222062830/http://nouncer.com/oauth/signature.html
     Realm = <<"http://photos.example.net/photos">>,
@@ -82,7 +82,7 @@ init_per_group(?GROUP_HUENIVERSE_GUIDE, Config) ->
     Sig = oauth1_signature:cons(SigArgs),
     orddict:store(?STATE_KEY_SIG, Sig, Config).
 
-end_per_group(?GROUP_HUENIVERSE_GUIDE, _Config) ->
+end_per_group(?CASE_GROUP_HUENIVERSE_GUIDE, _Config) ->
     ok.
 
 
@@ -126,11 +126,11 @@ kvl_find(L, K) ->
     ;   {value, {K, V}} -> {some, V}
     end.
 
-group_hueniverse_guide() ->
+spec_for_case_group_hueniverse_guide() ->
     Tests =
         [ t_hueniverse_guide_key
         , t_hueniverse_guide_base_string
         , t_hueniverse_guide_digest
         ],
     Properties = [],
-    {?GROUP_HUENIVERSE_GUIDE, Properties, Tests}.
+    {?CASE_GROUP_HUENIVERSE_GUIDE, Properties, Tests}.
