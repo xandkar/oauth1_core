@@ -14,9 +14,9 @@
 
 %% Tests
 -export(
-    [ t_hueniverse_guide_key/1
-    , t_hueniverse_guide_base_string/1
-    , t_hueniverse_guide_digest/1
+    [ t_key/1
+    , t_base_string/1
+    , t_digest/1
     ]).
 
 
@@ -29,6 +29,9 @@
     , oauth1
     ]).
 -define(STATE_KEY_SIG, sig).
+-define(STATE_KEY_SIG_KEY_EXPECTED    , sig_key_expected).
+-define(STATE_KEY_SIG_TEXT_EXPECTED   , sig_text_expected).
+-define(STATE_KEY_SIG_DIGEST_EXPECTED , sig_digest_expected).
 
 
 %%=============================================================================
@@ -51,7 +54,7 @@ end_per_suite(_Config) ->
     StopApp = fun (App) -> ok = application:stop(App) end,
     ok = lists:foreach(StopApp, lists:reverse(?APP_DEPS)).
 
-init_per_group(?CASE_GROUP_HUENIVERSE_GUIDE, Config) ->
+init_per_group(?CASE_GROUP_HUENIVERSE_GUIDE, Cfg1) ->
     % Test case based on:
     % https://web.archive.org/web/20131222062830/http://nouncer.com/oauth/signature.html
     Realm = <<"http://photos.example.net/photos">>,
@@ -79,8 +82,15 @@ init_per_group(?CASE_GROUP_HUENIVERSE_GUIDE, Config) ->
 
         , version              = {some, '1.0'}
         },
+    SigKeyExpected    = <<"kd94hf93k423kf44&pfkkdhi9sl3r4s00">>,
+    SigTextExpected   = <<"GET&http%3A%2F%2Fphotos.example.net%2Fphotos&file%3Dvacation.jpg%26oauth_consumer_key%3Ddpf43f3p2l4k3l03%26oauth_nonce%3Dkllo9940pd9333jh%26oauth_signature_method%3DHMAC-SHA1%26oauth_timestamp%3D1191242096%26oauth_token%3Dnnch734d00sl2jdk%26oauth_version%3D1.0%26size%3Doriginal">>,
+    SigDigestExpected = <<"tR3%2BTy81lMeYAr%2FFid0kMTYa%2FWM%3D">>,
     Sig = oauth1_signature:cons(SigArgs),
-    orddict:store(?STATE_KEY_SIG, Sig, Config).
+    Cfg2 = orddict:store(?STATE_KEY_SIG                , Sig              , Cfg1),
+    Cfg3 = orddict:store(?STATE_KEY_SIG_KEY_EXPECTED   , SigKeyExpected   , Cfg2),
+    Cfg4 = orddict:store(?STATE_KEY_SIG_TEXT_EXPECTED  , SigTextExpected  , Cfg3),
+    Cfg5 = orddict:store(?STATE_KEY_SIG_DIGEST_EXPECTED, SigDigestExpected, Cfg4),
+    Cfg5.
 
 end_per_group(?CASE_GROUP_HUENIVERSE_GUIDE, _Config) ->
     ok.
@@ -90,25 +100,25 @@ end_per_group(?CASE_GROUP_HUENIVERSE_GUIDE, _Config) ->
 %% Tests
 %%=============================================================================
 
-t_hueniverse_guide_key(Config) ->
+t_key(Config) ->
     {some, Sig} = kvl_find(Config, ?STATE_KEY_SIG),
-    KeyExpected = <<"kd94hf93k423kf44&pfkkdhi9sl3r4s00">>,
+    {some, KeyExpected} = kvl_find(Config, ?STATE_KEY_SIG_KEY_EXPECTED),
     KeyComputed = oauth1_signature:get_key(Sig),
     ct:log("KeyExpected: ~p", [KeyExpected]),
     ct:log("KeyComputed: ~p", [KeyComputed]),
     KeyComputed = KeyExpected.
 
-t_hueniverse_guide_base_string(Config) ->
+t_base_string(Config) ->
     {some, Sig} = kvl_find(Config, ?STATE_KEY_SIG),
-    BaseStringExpected = <<"GET&http%3A%2F%2Fphotos.example.net%2Fphotos&file%3Dvacation.jpg%26oauth_consumer_key%3Ddpf43f3p2l4k3l03%26oauth_nonce%3Dkllo9940pd9333jh%26oauth_signature_method%3DHMAC-SHA1%26oauth_timestamp%3D1191242096%26oauth_token%3Dnnch734d00sl2jdk%26oauth_version%3D1.0%26size%3Doriginal">>,
+    {some, BaseStringExpected} = kvl_find(Config, ?STATE_KEY_SIG_TEXT_EXPECTED),
     BaseStringComputed = oauth1_signature:get_text(Sig),
     ct:log("BaseStringExpected: ~p", [BaseStringExpected]),
     ct:log("BaseStringComputed: ~p", [BaseStringComputed]),
     BaseStringComputed = BaseStringExpected.
 
-t_hueniverse_guide_digest(Config) ->
+t_digest(Config) ->
     {some, Sig} = kvl_find(Config, ?STATE_KEY_SIG),
-    SigDigestExpected = <<"tR3%2BTy81lMeYAr%2FFid0kMTYa%2FWM%3D">>,
+    {some, SigDigestExpected} = kvl_find(Config, ?STATE_KEY_SIG_DIGEST_EXPECTED),
     SigDigestComputed = oauth1_signature:get_digest(Sig),
     ct:log("SigDigestExpected: ~p", [SigDigestExpected]),
     ct:log("SigDigestComputed: ~p", [SigDigestComputed]),
@@ -128,9 +138,9 @@ kvl_find(L, K) ->
 
 spec_for_case_group_hueniverse_guide() ->
     Tests =
-        [ t_hueniverse_guide_key
-        , t_hueniverse_guide_base_string
-        , t_hueniverse_guide_digest
+        [ t_key
+        , t_base_string
+        , t_digest
         ],
     Properties = [],
     {?CASE_GROUP_HUENIVERSE_GUIDE, Properties, Tests}.
