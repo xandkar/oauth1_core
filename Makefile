@@ -13,7 +13,11 @@ ci: \
 	deps \
 	compile \
 	tests \
+	download_plt \
 	dialyze
+
+download_plt:
+	@./download_plt
 
 fresh-build: \
 	clean \

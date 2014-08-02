@@ -1,0 +1,29 @@
+#! /bin/bash
+
+set -e
+
+
+die() {
+    echo "$1"
+    exit 1
+}
+
+plt_uri() {
+    declare -r erl_vsn=$(
+        erl \
+            -eval 'erlang:display(erlang:system_info(otp_release)), halt().' \
+            -noshell \
+        | tr -d '\r'
+    )
+    case "$erl_vsn" in
+        '"17"'     ) echo 'https://raw.githubusercontent.com/ibnfirnas/erlang-plts/master/plts/travis-erlang-17.0.plt'
+    ;;  '"R16B02"' ) echo 'https://raw.githubusercontent.com/ibnfirnas/erlang-plts/master/plts/travis-erlang-r16b02.plt'
+    ;; *           ) die "Unexpected Erlang version: $erl_vsn"
+    esac
+}
+
+main() {
+    curl $(plt_uri) > "$HOME/.dialyzer_plt"
+}
+
+main
