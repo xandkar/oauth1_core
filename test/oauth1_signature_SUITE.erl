@@ -28,10 +28,10 @@
     , hope
     , oauth1
     ]).
--define(STATE_KEY_SIG, sig).
--define(STATE_KEY_SIG_KEY_EXPECTED    , sig_key_expected).
--define(STATE_KEY_SIG_TEXT_EXPECTED   , sig_text_expected).
--define(STATE_KEY_SIG_DIGEST_EXPECTED , sig_digest_expected).
+-define(CFG_KEY_SIG, sig).
+-define(CFG_KEY_SIG_KEY_EXPECTED    , sig_key_expected).
+-define(CFG_KEY_SIG_TEXT_EXPECTED   , sig_text_expected).
+-define(CFG_KEY_SIG_DIGEST_EXPECTED , sig_digest_expected).
 
 
 %%=============================================================================
@@ -86,10 +86,10 @@ init_per_group(?CASE_GROUP_HUENIVERSE_GUIDE, Cfg1) ->
     SigTextExpected   = <<"GET&http%3A%2F%2Fphotos.example.net%2Fphotos&file%3Dvacation.jpg%26oauth_consumer_key%3Ddpf43f3p2l4k3l03%26oauth_nonce%3Dkllo9940pd9333jh%26oauth_signature_method%3DHMAC-SHA1%26oauth_timestamp%3D1191242096%26oauth_token%3Dnnch734d00sl2jdk%26oauth_version%3D1.0%26size%3Doriginal">>,
     SigDigestExpected = <<"tR3%2BTy81lMeYAr%2FFid0kMTYa%2FWM%3D">>,
     Sig = oauth1_signature:cons(SigArgs),
-    Cfg2 = orddict:store(?STATE_KEY_SIG                , Sig              , Cfg1),
-    Cfg3 = orddict:store(?STATE_KEY_SIG_KEY_EXPECTED   , SigKeyExpected   , Cfg2),
-    Cfg4 = orddict:store(?STATE_KEY_SIG_TEXT_EXPECTED  , SigTextExpected  , Cfg3),
-    Cfg5 = orddict:store(?STATE_KEY_SIG_DIGEST_EXPECTED, SigDigestExpected, Cfg4),
+    Cfg2 = orddict:store(?CFG_KEY_SIG                , Sig              , Cfg1),
+    Cfg3 = orddict:store(?CFG_KEY_SIG_KEY_EXPECTED   , SigKeyExpected   , Cfg2),
+    Cfg4 = orddict:store(?CFG_KEY_SIG_TEXT_EXPECTED  , SigTextExpected  , Cfg3),
+    Cfg5 = orddict:store(?CFG_KEY_SIG_DIGEST_EXPECTED, SigDigestExpected, Cfg4),
     Cfg5.
 
 end_per_group(?CASE_GROUP_HUENIVERSE_GUIDE, _Cfg) ->
@@ -101,24 +101,24 @@ end_per_group(?CASE_GROUP_HUENIVERSE_GUIDE, _Cfg) ->
 %%=============================================================================
 
 t_key(Cfg) ->
-    {some, Sig} = kvl_find(Cfg, ?STATE_KEY_SIG),
-    {some, KeyExpected} = kvl_find(Cfg, ?STATE_KEY_SIG_KEY_EXPECTED),
+    {some, Sig} = kvl_find(Cfg, ?CFG_KEY_SIG),
+    {some, KeyExpected} = kvl_find(Cfg, ?CFG_KEY_SIG_KEY_EXPECTED),
     KeyComputed = oauth1_signature:get_key(Sig),
     ct:log("KeyExpected: ~p", [KeyExpected]),
     ct:log("KeyComputed: ~p", [KeyComputed]),
     KeyComputed = KeyExpected.
 
 t_base_string(Cfg) ->
-    {some, Sig} = kvl_find(Cfg, ?STATE_KEY_SIG),
-    {some, BaseStringExpected} = kvl_find(Cfg, ?STATE_KEY_SIG_TEXT_EXPECTED),
+    {some, Sig} = kvl_find(Cfg, ?CFG_KEY_SIG),
+    {some, BaseStringExpected} = kvl_find(Cfg, ?CFG_KEY_SIG_TEXT_EXPECTED),
     BaseStringComputed = oauth1_signature:get_text(Sig),
     ct:log("BaseStringExpected: ~p", [BaseStringExpected]),
     ct:log("BaseStringComputed: ~p", [BaseStringComputed]),
     BaseStringComputed = BaseStringExpected.
 
 t_digest(Cfg) ->
-    {some, Sig} = kvl_find(Cfg, ?STATE_KEY_SIG),
-    {some, SigDigestExpected} = kvl_find(Cfg, ?STATE_KEY_SIG_DIGEST_EXPECTED),
+    {some, Sig} = kvl_find(Cfg, ?CFG_KEY_SIG),
+    {some, SigDigestExpected} = kvl_find(Cfg, ?CFG_KEY_SIG_DIGEST_EXPECTED),
     SigDigestComputed = oauth1_signature:get_digest(Sig),
     ct:log("SigDigestExpected: ~p", [SigDigestExpected]),
     ct:log("SigDigestComputed: ~p", [SigDigestComputed]),
