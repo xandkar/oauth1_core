@@ -45,12 +45,12 @@ groups() ->
     [ spec_for_case_group_hueniverse_guide()
     ].
 
-init_per_suite(Config) ->
+init_per_suite(Cfg) ->
     StartApp = fun (App) -> ok = application:start(App) end,
     ok = lists:foreach(StartApp, ?APP_DEPS),
-    Config.
+    Cfg.
 
-end_per_suite(_Config) ->
+end_per_suite(_Cfg) ->
     StopApp = fun (App) -> ok = application:stop(App) end,
     ok = lists:foreach(StopApp, lists:reverse(?APP_DEPS)).
 
@@ -92,7 +92,7 @@ init_per_group(?CASE_GROUP_HUENIVERSE_GUIDE, Cfg1) ->
     Cfg5 = orddict:store(?STATE_KEY_SIG_DIGEST_EXPECTED, SigDigestExpected, Cfg4),
     Cfg5.
 
-end_per_group(?CASE_GROUP_HUENIVERSE_GUIDE, _Config) ->
+end_per_group(?CASE_GROUP_HUENIVERSE_GUIDE, _Cfg) ->
     ok.
 
 
@@ -100,25 +100,25 @@ end_per_group(?CASE_GROUP_HUENIVERSE_GUIDE, _Config) ->
 %% Tests
 %%=============================================================================
 
-t_key(Config) ->
-    {some, Sig} = kvl_find(Config, ?STATE_KEY_SIG),
-    {some, KeyExpected} = kvl_find(Config, ?STATE_KEY_SIG_KEY_EXPECTED),
+t_key(Cfg) ->
+    {some, Sig} = kvl_find(Cfg, ?STATE_KEY_SIG),
+    {some, KeyExpected} = kvl_find(Cfg, ?STATE_KEY_SIG_KEY_EXPECTED),
     KeyComputed = oauth1_signature:get_key(Sig),
     ct:log("KeyExpected: ~p", [KeyExpected]),
     ct:log("KeyComputed: ~p", [KeyComputed]),
     KeyComputed = KeyExpected.
 
-t_base_string(Config) ->
-    {some, Sig} = kvl_find(Config, ?STATE_KEY_SIG),
-    {some, BaseStringExpected} = kvl_find(Config, ?STATE_KEY_SIG_TEXT_EXPECTED),
+t_base_string(Cfg) ->
+    {some, Sig} = kvl_find(Cfg, ?STATE_KEY_SIG),
+    {some, BaseStringExpected} = kvl_find(Cfg, ?STATE_KEY_SIG_TEXT_EXPECTED),
     BaseStringComputed = oauth1_signature:get_text(Sig),
     ct:log("BaseStringExpected: ~p", [BaseStringExpected]),
     ct:log("BaseStringComputed: ~p", [BaseStringComputed]),
     BaseStringComputed = BaseStringExpected.
 
-t_digest(Config) ->
-    {some, Sig} = kvl_find(Config, ?STATE_KEY_SIG),
-    {some, SigDigestExpected} = kvl_find(Config, ?STATE_KEY_SIG_DIGEST_EXPECTED),
+t_digest(Cfg) ->
+    {some, Sig} = kvl_find(Cfg, ?STATE_KEY_SIG),
+    {some, SigDigestExpected} = kvl_find(Cfg, ?STATE_KEY_SIG_DIGEST_EXPECTED),
     SigDigestComputed = oauth1_signature:get_digest(Sig),
     ct:log("SigDigestExpected: ~p", [SigDigestExpected]),
     ct:log("SigDigestComputed: ~p", [SigDigestComputed]),
