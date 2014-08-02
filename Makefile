@@ -4,6 +4,7 @@
 	deps \
 	deps-get \
 	deps-update \
+	download_plt \
 	compile \
 	tests \
 	clean \
