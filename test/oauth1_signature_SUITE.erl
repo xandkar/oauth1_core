@@ -20,7 +20,7 @@
     ]).
 
 
--define(CASE_GROUP_HUENIVERSE_GUIDE, case_hueniverse_guide).
+-define(CASE_GROUP_HUENIVERSE_GUIDE, hueniverse_guide).
 -define(APP_DEPS,
     [ crypto
     , cowlib
