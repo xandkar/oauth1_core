@@ -13,9 +13,7 @@
 ci: \
 	deps \
 	compile \
-	tests \
-	select_plt \
-	dialyze
+	tests
 
 select_plt:
 	@./plt/select.sh
