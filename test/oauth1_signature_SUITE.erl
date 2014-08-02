@@ -28,7 +28,7 @@
     , hope
     , oauth1
     ]).
--define(CFG_KEY_SIG, sig).
+-define(CFG_KEY_SIG                 , sig).
 -define(CFG_KEY_SIG_KEY_EXPECTED    , sig_key_expected).
 -define(CFG_KEY_SIG_TEXT_EXPECTED   , sig_text_expected).
 -define(CFG_KEY_SIG_DIGEST_EXPECTED , sig_digest_expected).
@@ -101,7 +101,7 @@ end_per_group(?CASE_GROUP_HUENIVERSE_GUIDE, _Cfg) ->
 %%=============================================================================
 
 t_key(Cfg) ->
-    {some, Sig} = kvl_find(Cfg, ?CFG_KEY_SIG),
+    {some, Sig}         = kvl_find(Cfg, ?CFG_KEY_SIG),
     {some, KeyExpected} = kvl_find(Cfg, ?CFG_KEY_SIG_KEY_EXPECTED),
     KeyComputed = oauth1_signature:get_key(Sig),
     ct:log("KeyExpected: ~p", [KeyExpected]),
@@ -109,7 +109,7 @@ t_key(Cfg) ->
     KeyComputed = KeyExpected.
 
 t_base_string(Cfg) ->
-    {some, Sig} = kvl_find(Cfg, ?CFG_KEY_SIG),
+    {some, Sig}                = kvl_find(Cfg, ?CFG_KEY_SIG),
     {some, BaseStringExpected} = kvl_find(Cfg, ?CFG_KEY_SIG_TEXT_EXPECTED),
     BaseStringComputed = oauth1_signature:get_text(Sig),
     ct:log("BaseStringExpected: ~p", [BaseStringExpected]),
@@ -117,7 +117,7 @@ t_base_string(Cfg) ->
     BaseStringComputed = BaseStringExpected.
 
 t_digest(Cfg) ->
-    {some, Sig} = kvl_find(Cfg, ?CFG_KEY_SIG),
+    {some, Sig}               = kvl_find(Cfg, ?CFG_KEY_SIG),
     {some, SigDigestExpected} = kvl_find(Cfg, ?CFG_KEY_SIG_DIGEST_EXPECTED),
     SigDigestComputed = oauth1_signature:get_digest(Sig),
     ct:log("SigDigestExpected: ~p", [SigDigestExpected]),
