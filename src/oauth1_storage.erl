@@ -38,5 +38,5 @@ get(Bucket, Key) ->
 -spec lookup_storage_module() ->
     atom().
 lookup_storage_module() ->
-    {ok, StorageModule} = application:get_env(oauth1, storage_module),
+    {ok, StorageModule} = application:get_env(oauth1_core, storage_module),
     StorageModule.

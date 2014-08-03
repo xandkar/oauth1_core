@@ -26,7 +26,7 @@
     , cowlib
     , bstr
     , hope
-    , oauth1
+    , oauth1_core
     ]).
 -define(CFG_KEY_SIG                 , sig).
 -define(CFG_KEY_SIG_KEY_EXPECTED    , sig_key_expected).

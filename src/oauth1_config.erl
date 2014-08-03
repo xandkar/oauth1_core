@@ -5,7 +5,7 @@
     ]).
 
 
--define(APPLICATION, oauth1).
+-define(APPLICATION, oauth1_core).
 
 
 -spec get(atom()) ->
