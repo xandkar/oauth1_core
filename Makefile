@@ -37,7 +37,7 @@ compile:
 	@rebar compile
 
 test:
-	@rebar ct skip_deps=true --verbose=1
+	@rebar ct skip_deps=true --verbose=0
 
 clean:
 	@rebar clean
