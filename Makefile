@@ -6,22 +6,25 @@
 	deps-update \
 	select_plt \
 	compile \
+	compile_all \
 	test \
+	test_all \
 	clean \
+	clean_all \
 	dialyze
 
 ci: \
 	deps \
-	compile \
+	compile_all \
 	test
 
 select_plt:
 	@./plt/select.sh
 
 fresh-build: \
-	clean \
+	clean_all \
 	deps \
-	compile
+	compile_all
 
 deps: \
 	deps-get \
@@ -34,13 +37,23 @@ deps-update:
 	@rebar update-deps
 
 compile:
-	@rebar compile
+	@rebar compile skip_deps=true
+
+compile_all:
+	@rebar compile skip_deps=false
 
 test:
 	@rebar ct skip_deps=true --verbose=0
 
+test_all:
+	@rebar ct skip_deps=false --verbose=0
+
 clean:
-	@rebar clean
+	@rebar clean skip_deps=true
+	@rm -rf ebin/
+
+clean_all:
+	@rebar clean skip_deps=false
 	@rm -rf ebin/
 
 dialyze:
