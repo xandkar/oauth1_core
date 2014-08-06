@@ -1,5 +1,7 @@
 -module(oauth1_storage).
 
+-include_lib("oauth1_module_abbreviations.hrl").
+
 -export_type(
     [ error/0
     ]).
@@ -38,5 +40,4 @@ get(Bucket, Key) ->
 -spec lookup_storage_module() ->
     atom().
 lookup_storage_module() ->
-    {ok, StorageModule} = application:get_env(oauth1_core, storage_module),
-    StorageModule.
+    ?config:get(storage_module).
