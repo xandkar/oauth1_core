@@ -14,6 +14,9 @@
     % Construct
     [ cons/1
 
+    , method_of_bin/1
+    , method_to_bin/1
+
     % Access (normal usage)
     , get_digest/1
 
@@ -114,3 +117,12 @@ get_key(#t{key=Key}) ->
     binary().
 get_text(#t{text=Text}) ->
     Text.
+
+-spec method_to_bin(method()) ->
+    binary().
+method_to_bin('HMAC_SHA1') -> <<"HMAC-SHA1">>.
+
+-spec method_of_bin(binary()) ->
+    hope_result:t(method(), {signature_method_unsupported, binary()}).
+method_of_bin(<<"HMAC-SHA1">>) -> {ok, 'HMAC_SHA1'};
+method_of_bin(<<Bin/binary>> ) -> {error, {signature_method_unsupported, Bin}}.
