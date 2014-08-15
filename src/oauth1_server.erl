@@ -101,17 +101,6 @@
 -type common_sig_params() ::
     #common_sig_params{}.
 
--record(given_parameters,
-    { realm            :: hope_option:t(binary())
-    , consumer_key     :: hope_option:t(binary())
-    , signature        :: hope_option:t(binary())
-    , signature_method :: hope_option:t(binary())
-    , timestamp        :: hope_option:t(integer())
-    , nonce            :: hope_option:t(binary())
-    , callback         :: hope_option:t(binary())
-    , version          :: hope_option:t(binary())
-    }).
-
 
 %%=============================================================================
 %% API
@@ -226,15 +215,18 @@ initiate_args_of_params(ResourceURI, ParamPairsGiven) ->
                 , ?PARAM_NONCE
                 , ?PARAM_CALLBACK
                 ],
+            ParamsOptional = [?PARAM_VERSION],
+            ParamsSupported = ParamsRequired ++ ParamsOptional,
             ParamsGiven = [K || {K, _V} <- ParamPairsGiven],
             ParamsGivenUnique = lists:usort(ParamsGiven),
             ParamsDups = lists:usort(ParamsGiven -- ParamsGivenUnique),
             ParamsMissing =
                 [P || P <- ParamsRequired, not lists:member(P, ParamsGivenUnique)],
-            case {ParamsDups, ParamsMissing}
-            of  {[], []} ->
+            ParamsUnsupported = ParamsGivenUnique -- ParamsSupported,
+            case {ParamsDups, ParamsMissing, ParamsUnsupported}
+            of  {[], [], []} ->
                     {ok, ok}
-            ;   {_, _} ->
+            ;   {_, _, _} ->
                     ErrorDups =
                         case ParamsDups
                         of  []    -> []
@@ -245,74 +237,47 @@ initiate_args_of_params(ResourceURI, ParamPairsGiven) ->
                         of  []    -> []
                         ;   [_|_] -> [{parameters_missing, ParamsMissing}]
                         end,
-                    Errors = ErrorDups ++ ErrorMissing,
+                    ErrorUnsupported =
+                        case ParamsUnsupported
+                        of  []    -> []
+                        ;   [_|_] -> [{parameters_unsupported, ParamsUnsupported}]
+                        end,
+                    Errors = ErrorDups ++ ErrorMissing ++ ErrorUnsupported,
                     {error, {bad_request, Errors}}
             end
         end,
-    ReadParamValues =
-        fun (ok) ->
-            P0 = ParamPairsGiven,
-            {{some, Realm}        , P1} = hope_kv_list:pop(P0, ?PARAM_REALM),
-            {{some, ConsumerKey}  , P2} = hope_kv_list:pop(P1, ?PARAM_CONSUMER_KEY),
-            {{some, SigGiven}     , P3} = hope_kv_list:pop(P2, ?PARAM_SIGNATURE),
-            {{some, SigMethodBin} , P4} = hope_kv_list:pop(P3, ?PARAM_SIGNATURE_METHOD),
-            {{some, Timestamp}    , P5} = hope_kv_list:pop(P4, ?PARAM_TIMESTAMP),
-            {{some, Nonce}        , P6} = hope_kv_list:pop(P5, ?PARAM_NONCE),
-            {{some, CallbackBin}  , P7} = hope_kv_list:pop(P6, ?PARAM_CALLBACK),
-            {VersionOpt           , P8} = hope_kv_list:pop(P7, ?PARAM_VERSION),
-            ParamPairsRemaining = P8,
-            case ParamPairsRemaining
-            of  [_|_]=ParamsUnsupported0 ->
-                    ParamsUnsupported = [K || {K, _V} <- ParamsUnsupported0],
-                    Error = {parameters_unsupported, ParamsUnsupported},
-                    {error, {bad_request, [Error]}}
-            ;   [] ->
-                    ParamsGiven = #given_parameters
-                        { realm            = {some, Realm}
-                        , consumer_key     = {some, ConsumerKey}
-                        , signature        = {some, SigGiven}
-                        , signature_method = {some, SigMethodBin}
-                        , timestamp        = {some, Timestamp}
-                        , nonce            = {some, Nonce}
-                        , callback         = {some, CallbackBin}
-                        , version          = VersionOpt
-                        },
-                    {ok, ParamsGiven}
-            end
-        end,
     ParseSigMethod  =
-        fun (#given_parameters{}=ParamsGiven) ->
-            {some, SigMethBin} = ParamsGiven#given_parameters.signature_method,
+        fun (ok) ->
+            P = ParamPairsGiven,
+            {some, SigMethBin} = hope_kv_list:get(P, ?PARAM_SIGNATURE_METHOD),
             case ?signature:method_of_bin(SigMethBin)
             of  {ok, SigMethod} ->
-                    {ok, {ParamsGiven, SigMethod}}
+                    {ok, SigMethod}
             ;   {error, {signature_method_unsupported, SigMethBin}=Error} ->
                     {error, {bad_request, [Error]}}
             end
         end,
     ParseCallbackURI  =
-        fun ({#given_parameters{}=ParamsGiven, SigMeth}) ->
-            {some, CallbackBin} = ParamsGiven#given_parameters.callback,
+        fun (SigMeth) ->
+            P = ParamPairsGiven,
+            {some, CallbackBin} = hope_kv_list:get(P, ?PARAM_CALLBACK),
             case ?uri:of_bin(CallbackBin)
             of  {ok, CallbackURI} ->
-                    {ok, {ParamsGiven, SigMeth, CallbackURI}}
+                    {ok, {SigMeth, CallbackURI}}
             ;   {error, _} ->
                     Error = {callback_uri_invalid, CallbackBin},
                     {error, {bad_request, [Error]}}
             end
         end,
     ConsArgs =
-        fun ({#given_parameters{}=ParamsGiven, SigMethod, CallbackURI}) ->
-            #given_parameters
-            { realm            = {some, Realm}
-            , consumer_key     = {some, ConsumerKey}
-            , signature        = {some, SigGiven}
-            , signature_method = {some, _}
-            , timestamp        = {some, Timestamp}
-            , nonce            = {some, Nonce}
-            , callback         = {some, _}
-            , version          = VersionOpt
-            } = ParamsGiven,
+        fun ({SigMethod, CallbackURI}) ->
+            P = ParamPairsGiven,
+            {some, Realm}        = hope_kv_list:get(P, ?PARAM_REALM),
+            {some, ConsumerKey}  = hope_kv_list:get(P, ?PARAM_CONSUMER_KEY),
+            {some, SigGiven}     = hope_kv_list:get(P, ?PARAM_SIGNATURE),
+            {some, Timestamp}    = hope_kv_list:get(P, ?PARAM_TIMESTAMP),
+            {some, Nonce}        = hope_kv_list:get(P, ?PARAM_NONCE),
+            VersionOpt           = hope_kv_list:get(P, ?PARAM_VERSION),
             InitiateArgs = #oauth1_server_args_initiate
                 { resource            = ?resource:cons(Realm, ResourceURI)
                 , consumer_key        = {client, ConsumerKey}
@@ -328,7 +293,6 @@ initiate_args_of_params(ResourceURI, ParamPairsGiven) ->
         end,
     Steps =
         [ CheckParamPresence
-        , ReadParamValues
         , ParseSigMethod
         , ParseCallbackURI
         , ConsArgs
