@@ -71,7 +71,7 @@ end_per_suite(_Cfg) ->
 %%=============================================================================
 
 t_initiate_args_of_params__error__badreq__params_unsupported(_Cfg) ->
-    ResourceURI = <<"http://foo/bar">>,
+    {ok, ResourceURI} = oauth1_uri:of_bin(<<"http://foo/bar">>),
     ParamUnsupported = <<"old_macdonald">>,
     Params =
         [ {?PARAM_REALM            , <<>>}
@@ -89,14 +89,14 @@ t_initiate_args_of_params__error__badreq__params_unsupported(_Cfg) ->
     {error, {bad_request, [Error]}} = Result.
 
 t_initiate_args_of_params__error__badreq__params_missing(_Cfg) ->
-    ResourceURI = <<"http://foo/bar">>,
+    {ok, ResourceURI} = oauth1_uri:of_bin(<<"http://foo/bar">>),
     Params = [],
     Result = oauth1_server:initiate_args_of_params(ResourceURI, Params),
     ct:log("Result: ~p", [Result]),
     {error, {bad_request, [{parameters_missing, [_|_]}]}} = Result.
 
 t_initiate_args_of_params__error__badreq__params_dups(_Cfg) ->
-    ResourceURI = <<"http://foo/bar">>,
+    {ok, ResourceURI} = oauth1_uri:of_bin(<<"http://foo/bar">>),
     Params =
         [ {?PARAM_REALM            , <<>>}
         , {?PARAM_CONSUMER_KEY     , <<>>}
@@ -113,7 +113,7 @@ t_initiate_args_of_params__error__badreq__params_dups(_Cfg) ->
     {error, {bad_request, [Error]}} = Result.
 
 t_initiate_args_of_params__error__badreq__params_missing_and_dups(_Cfg) ->
-    ResourceURI = <<"http://foo/bar">>,
+    {ok, ResourceURI} = oauth1_uri:of_bin(<<"http://foo/bar">>),
     Params =
         [ {?PARAM_CALLBACK         , <<>>}
         , {?PARAM_CALLBACK         , <<>>}
@@ -125,7 +125,7 @@ t_initiate_args_of_params__error__badreq__params_missing_and_dups(_Cfg) ->
     {some, [_|_]} = hope_kv_list:get(Errors, parameters_duplicated).
 
 t_initiate_args_of_params__error__badreq__params_missing_dups_unsupported(_Cfg) ->
-    ResourceURI = <<"http://foo/bar">>,
+    {ok, ResourceURI} = oauth1_uri:of_bin(<<"http://foo/bar">>),
     ParamUnsupported = <<"foo">>,
     ParamDuplicated = ?PARAM_CALLBACK,
     Params =
@@ -142,7 +142,7 @@ t_initiate_args_of_params__error__badreq__params_missing_dups_unsupported(_Cfg) 
     {some, [ParamUnsupported]} = hope_kv_list:get(E, parameters_unsupported).
 
 t_initiate_args_of_params__error__badreq__sig_meth_unsupported(_Cfg) ->
-    ResourceURI = <<"http://foo/bar">>,
+    {ok, ResourceURI} = oauth1_uri:of_bin(<<"http://foo/bar">>),
     SigMethod = <<"HAMMOCK-SHA7">>,
     Params =
         [ {?PARAM_REALM            , <<>>}
@@ -159,7 +159,7 @@ t_initiate_args_of_params__error__badreq__sig_meth_unsupported(_Cfg) ->
     {error, {bad_request, [Error]}} = Result.
 
 t_initiate_args_of_params__error__badreq__callback_uri_invalid(_Cfg) ->
-    ResourceURI = <<"http://foo/bar">>,
+    {ok, ResourceURI} = oauth1_uri:of_bin(<<"http://foo/bar">>),
     CallbackURI = <<"some/garbage/path?to=nowhere">>,
     Params =
         [ {?PARAM_REALM            , <<>>}
