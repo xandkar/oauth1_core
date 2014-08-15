@@ -215,12 +215,12 @@ initiate_args_of_params(ResourceURI, ParamPairsGiven) ->
                 , ?PARAM_NONCE
                 , ?PARAM_CALLBACK
                 ],
-            ParamsOptional = [?PARAM_VERSION],
-            ParamsSupported = ParamsRequired ++ ParamsOptional,
-            ParamsGiven = [K || {K, _V} <- ParamPairsGiven],
+            ParamsOptional    = [?PARAM_VERSION],
+            ParamsSupported   = ParamsRequired ++ ParamsOptional,
+            ParamsGiven       = [K || {K, _V} <- ParamPairsGiven],
             ParamsGivenUnique = lists:usort(ParamsGiven),
-            ParamsDups = lists:usort(ParamsGiven -- ParamsGivenUnique),
-            ParamsMissing = ParamsRequired -- ParamsGivenUnique,
+            ParamsDups        = lists:usort(ParamsGiven -- ParamsGivenUnique),
+            ParamsMissing     = ParamsRequired -- ParamsGivenUnique,
             ParamsUnsupported = ParamsGivenUnique -- ParamsSupported,
             case {ParamsDups, ParamsMissing, ParamsUnsupported}
             of  {[], [], []} ->
