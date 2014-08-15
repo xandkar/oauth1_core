@@ -114,15 +114,16 @@ t_initiate_args_of_params__error__badreq__params_dups(_Cfg) ->
 
 t_initiate_args_of_params__error__badreq__params_missing_and_dups(_Cfg) ->
     {ok, ResourceURI} = oauth1_uri:of_bin(<<"http://foo/bar">>),
+    ParamDuplicated = ?PARAM_CALLBACK,
     Params =
-        [ {?PARAM_CALLBACK , <<>>}
-        , {?PARAM_CALLBACK , <<>>}
+        [ {ParamDuplicated , <<>>}
+        , {ParamDuplicated , <<>>}
         ],
     Result = oauth1_server:initiate_args_of_params(ResourceURI, Params),
     ct:log("Result: ~p", [Result]),
     {error, {bad_request, Errors}} = Result,
     {some, [_|_]} = hope_kv_list:get(Errors, parameters_missing),
-    {some, [_|_]} = hope_kv_list:get(Errors, parameters_duplicated).
+    {some, [ParamDuplicated]} = hope_kv_list:get(Errors, parameters_duplicated).
 
 t_initiate_args_of_params__error__badreq__params_missing_dups_unsupported(_Cfg) ->
     {ok, ResourceURI} = oauth1_uri:of_bin(<<"http://foo/bar">>),
