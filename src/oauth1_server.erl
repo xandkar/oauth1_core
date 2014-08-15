@@ -220,8 +220,7 @@ initiate_args_of_params(ResourceURI, ParamPairsGiven) ->
             ParamsGiven = [K || {K, _V} <- ParamPairsGiven],
             ParamsGivenUnique = lists:usort(ParamsGiven),
             ParamsDups = lists:usort(ParamsGiven -- ParamsGivenUnique),
-            ParamsMissing =
-                [P || P <- ParamsRequired, not lists:member(P, ParamsGivenUnique)],
+            ParamsMissing = ParamsRequired -- ParamsGivenUnique,
             ParamsUnsupported = ParamsGivenUnique -- ParamsSupported,
             case {ParamsDups, ParamsMissing, ParamsUnsupported}
             of  {[], [], []} ->
