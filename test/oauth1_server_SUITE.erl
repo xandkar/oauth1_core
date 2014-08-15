@@ -115,8 +115,8 @@ t_initiate_args_of_params__error__badreq__params_dups(_Cfg) ->
 t_initiate_args_of_params__error__badreq__params_missing_and_dups(_Cfg) ->
     {ok, ResourceURI} = oauth1_uri:of_bin(<<"http://foo/bar">>),
     Params =
-        [ {?PARAM_CALLBACK         , <<>>}
-        , {?PARAM_CALLBACK         , <<>>}
+        [ {?PARAM_CALLBACK , <<>>}
+        , {?PARAM_CALLBACK , <<>>}
         ],
     Result = oauth1_server:initiate_args_of_params(ResourceURI, Params),
     ct:log("Result: ~p", [Result]),
