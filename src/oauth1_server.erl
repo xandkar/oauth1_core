@@ -201,7 +201,7 @@ initiate(#oauth1_server_args_initiate
     when ResourceURI :: oauth1_uri:t()
        , Parameters  :: [{binary(), binary()}]
        , Ok          :: args_initiate()
-       , Error       :: {bad_request, error_bad_request()}
+       , Error       :: {bad_request, [error_bad_request()]}
        .
 initiate_args_of_params(ResourceURI, ParamPairsGiven) ->
     CheckParamPresence =
