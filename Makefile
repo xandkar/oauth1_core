@@ -57,4 +57,7 @@ clean_all:
 	@rm -rf ebin/
 
 dialyze:
-	@dialyzer test ebin deps/*/ebin/*.beam
+	@dialyzer \
+		ebin/*.beam \
+		deps/*/ebin/*.beam \
+		test/*.beam
