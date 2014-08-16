@@ -199,7 +199,7 @@ initiate(#oauth1_server_args_initiate
 -spec initiate_args_of_params(ResourceURI, Parameters) ->
     hope_result:t(Ok, Error)
     when ResourceURI :: oauth1_uri:t()
-       , Parameters  :: [{binary(), binary()}]
+       , Parameters  :: [{binary(), binary() | integer()}]
        , Ok          :: args_initiate()
        , Error       :: {bad_request, [error_bad_request()]}
        .
