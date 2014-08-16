@@ -56,7 +56,7 @@ clean_all:
 	@rebar clean skip_deps=false
 	@rm -rf ebin/
 
-dialyze:
+dialyze: test
 	@dialyzer \
 		ebin/*.beam \
 		deps/*/ebin/*.beam \
