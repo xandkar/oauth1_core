@@ -58,6 +58,10 @@ clean_all:
 
 dialyze: test
 	@dialyzer \
-		ebin/*.beam \
+		$(shell \
+			ls -1 ebin/*.beam \
+			| grep -v oauth1_http_header_authorization_lexer.beam \
+			| grep -v oauth1_http_header_authorization_parser.beam \
+		) \
 		deps/*/ebin/*.beam \
 		test/*.beam

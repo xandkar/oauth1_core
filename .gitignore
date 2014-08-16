@@ -6,3 +6,5 @@ logs/
 *.beam
 *.plt
 erl_crash.dump
+src/oauth1_http_header_authorization_lexer.erl
+src/oauth1_http_header_authorization_parser.erl
