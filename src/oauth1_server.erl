@@ -36,6 +36,7 @@
     | {parameters_duplicated        , [binary()]}
     | {signature_method_unsupported , binary()}
     | {callback_uri_invalid         , binary()}
+    | {timestamp_invalid            , binary()}
     .
 
 -type error_unauthorized() ::
@@ -199,7 +200,7 @@ initiate(#oauth1_server_args_initiate
 -spec initiate_args_of_params(ResourceURI, Parameters) ->
     hope_result:t(Ok, Error)
     when ResourceURI :: oauth1_uri:t()
-       , Parameters  :: [{binary(), binary() | integer()}]
+       , Parameters  :: [{binary(), binary()}]
        , Ok          :: args_initiate()
        , Error       :: {bad_request, [error_bad_request()]}
        .
@@ -268,13 +269,25 @@ initiate_args_of_params(ResourceURI, ParamPairsGiven) ->
                     {error, {bad_request, [Error]}}
             end
         end,
-    ConsArgs =
+    ParseTimestamp =
         fun ({SigMethod, CallbackURI}) ->
+            P = ParamPairsGiven,
+            {some, TimestampBin} = hope_kv_list:get(P, ?PARAM_TIMESTAMP),
+            BinToInt = hope_result:lift_exn(fun erlang:binary_to_integer/1),
+            case BinToInt(TimestampBin)
+            of  {ok, Timestamp} ->
+                    {ok, {SigMethod, CallbackURI, Timestamp}}
+            ;   {error, {error, badarg}} ->
+                    Error = {timestamp_invalid, TimestampBin},
+                    {error, {bad_request, [Error]}}
+            end
+        end,
+    ConsArgs =
+        fun ({SigMethod, CallbackURI, Timestamp}) ->
             P = ParamPairsGiven,
             {some, Realm}        = hope_kv_list:get(P, ?PARAM_REALM),
             {some, ConsumerKey}  = hope_kv_list:get(P, ?PARAM_CONSUMER_KEY),
             {some, SigGiven}     = hope_kv_list:get(P, ?PARAM_SIGNATURE),
-            {some, Timestamp}    = hope_kv_list:get(P, ?PARAM_TIMESTAMP),
             {some, Nonce}        = hope_kv_list:get(P, ?PARAM_NONCE),
             VersionOpt           = hope_kv_list:get(P, ?PARAM_VERSION),
             InitiateArgs = #oauth1_server_args_initiate
@@ -294,6 +307,7 @@ initiate_args_of_params(ResourceURI, ParamPairsGiven) ->
         [ CheckParamPresence
         , ParseSigMethod
         , ParseCallbackURI
+        , ParseTimestamp
         , ConsArgs
         ],
     hope_result:pipe(Steps, ok).

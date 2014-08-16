@@ -20,6 +20,7 @@
     , t_initiate_args_of_params__error__badreq__params_missing_dups_unsupported/1
     , t_initiate_args_of_params__error__badreq__sig_meth_unsupported/1
     , t_initiate_args_of_params__error__badreq__callback_uri_invalid/1
+    , t_initiate_args_of_params__error__badreq__timestamp_invalid/1
     , t_initiate_args_of_params__ok/1
     ]).
 
@@ -50,6 +51,7 @@ groups() ->
         , t_initiate_args_of_params__error__badreq__params_missing_dups_unsupported
         , t_initiate_args_of_params__error__badreq__sig_meth_unsupported
         , t_initiate_args_of_params__error__badreq__callback_uri_invalid
+        , t_initiate_args_of_params__error__badreq__timestamp_invalid
         , t_initiate_args_of_params__ok
         ],
     Properties = [],
@@ -78,7 +80,7 @@ t_initiate_args_of_params__error__badreq__params_unsupported(_Cfg) ->
         , {?PARAM_CONSUMER_KEY     , <<>>}
         , {?PARAM_SIGNATURE        , <<>>}
         , {?PARAM_SIGNATURE_METHOD , <<>>}
-        , {?PARAM_TIMESTAMP        , 123}
+        , {?PARAM_TIMESTAMP        , <<"123">>}
         , {?PARAM_NONCE            , <<>>}
         , {?PARAM_CALLBACK         , <<>>}
         , {ParamUnsupported        , <<>>}
@@ -102,7 +104,7 @@ t_initiate_args_of_params__error__badreq__params_dups(_Cfg) ->
         , {?PARAM_CONSUMER_KEY     , <<>>}
         , {?PARAM_SIGNATURE        , <<>>}
         , {?PARAM_SIGNATURE_METHOD , <<>>}
-        , {?PARAM_TIMESTAMP        , 123}
+        , {?PARAM_TIMESTAMP        , <<"123">>}
         , {?PARAM_NONCE            , <<>>}
         , {?PARAM_CALLBACK         , <<>>}
         , {?PARAM_CALLBACK         , <<>>}
@@ -150,7 +152,7 @@ t_initiate_args_of_params__error__badreq__sig_meth_unsupported(_Cfg) ->
         , {?PARAM_CONSUMER_KEY     , <<>>}
         , {?PARAM_SIGNATURE        , <<>>}
         , {?PARAM_SIGNATURE_METHOD , SigMethod}
-        , {?PARAM_TIMESTAMP        , 123}
+        , {?PARAM_TIMESTAMP        , <<"123">>}
         , {?PARAM_NONCE            , <<>>}
         , {?PARAM_CALLBACK         , <<>>}
         ],
@@ -167,7 +169,7 @@ t_initiate_args_of_params__error__badreq__callback_uri_invalid(_Cfg) ->
         , {?PARAM_CONSUMER_KEY     , <<>>}
         , {?PARAM_SIGNATURE        , <<>>}
         , {?PARAM_SIGNATURE_METHOD , <<"HMAC-SHA1">>}
-        , {?PARAM_TIMESTAMP        , 123}
+        , {?PARAM_TIMESTAMP        , <<"123">>}
         , {?PARAM_NONCE            , <<>>}
         , {?PARAM_CALLBACK         , CallbackURI}
         ],
@@ -182,7 +184,8 @@ t_initiate_args_of_params__ok(_Cfg) ->
     ConsumerKey       = <<>>,
     Signature         = <<>>,
     SignatureMethod   = <<"HMAC-SHA1">>,
-    Timestamp         = 123,
+    TimestampBin      = <<"123">>,
+    TimestampInt      =    123,
     Nonce             = <<>>,
     CallbackBin       = <<"http://bubble.gum/ready">>,
     {ok, CallbackURI} = oauth1_uri:of_bin(CallbackBin),
@@ -191,7 +194,7 @@ t_initiate_args_of_params__ok(_Cfg) ->
         , {?PARAM_CONSUMER_KEY     , ConsumerKey}
         , {?PARAM_SIGNATURE        , Signature}
         , {?PARAM_SIGNATURE_METHOD , SignatureMethod}
-        , {?PARAM_TIMESTAMP        , Timestamp}
+        , {?PARAM_TIMESTAMP        , TimestampBin}
         , {?PARAM_NONCE            , Nonce}
         , {?PARAM_CALLBACK         , CallbackBin}
         ],
@@ -205,9 +208,26 @@ t_initiate_args_of_params__ok(_Cfg) ->
     , consumer_key        = {client, ConsumerKey}
     , signature           = Signature
     , signature_method    = 'HMAC_SHA1'
-    , timestamp           = Timestamp
+    , timestamp           = TimestampInt
     , nonce               = Nonce
     , client_callback_uri = CallbackURI
     , host                = Host
     , version             = none
     } = Args.
+
+t_initiate_args_of_params__error__badreq__timestamp_invalid(_Cfg) ->
+    {ok, ResourceURI} = oauth1_uri:of_bin(<<"http://foo/bar">>),
+    Timestamp = <<"not_a_number">>,
+    Params =
+        [ {?PARAM_REALM            , <<>>}
+        , {?PARAM_CONSUMER_KEY     , <<>>}
+        , {?PARAM_SIGNATURE        , <<>>}
+        , {?PARAM_SIGNATURE_METHOD , <<"HMAC-SHA1">>}
+        , {?PARAM_TIMESTAMP        , Timestamp}
+        , {?PARAM_NONCE            , <<>>}
+        , {?PARAM_CALLBACK         , <<"http://bubble.gum/ready">>}
+        ],
+    Result = oauth1_server:initiate_args_of_params(ResourceURI, Params),
+    ct:log("Result: ~p", [Result]),
+    Error = {timestamp_invalid, Timestamp},
+    {error, {bad_request, [Error]}} = Result.
