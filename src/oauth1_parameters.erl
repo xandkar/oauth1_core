@@ -6,11 +6,15 @@
 
 -export(
     [ of_http_header_authorization/1
+    , to_http_header_authorization/1
     ]).
 
 
 -type t() ::
     [{binary(), binary()}].
+
+
+-define(OAUTH, "OAuth").
 
 
 -spec of_http_header_authorization(binary()) ->
@@ -30,3 +34,19 @@ of_http_header_authorization(<<ParamsBin/binary>>) ->
     ;   {_ErrorLine, _Module, _Reason}=Error ->
             {error, {invalid_format, {lexer, Error}}}
     end.
+
+to_http_header_authorization([]) ->
+    <<?OAUTH>>;
+to_http_header_authorization([{_K1, _V1}=Pair1 | T]) ->
+    Append =
+        fun (K, V, Acc) ->
+            PairBin = pair_to_bin({K, V}),
+            <<Acc/binary, ", ", PairBin/binary>>
+        end,
+    Pair1Bin = pair_to_bin(Pair1),
+    Init = <<?OAUTH, " ", Pair1Bin/binary>>,
+    hope_kv_list:fold(T, Append, Init).
+
+
+pair_to_bin({<<K/binary>>, <<V/binary>>}) ->
+    <<K/binary, "=", "\"", V/binary, "\"">>.

@@ -1,5 +1,7 @@
 -module(oauth1_http_header_authorization_SUITE).
 
+-include_lib("oauth1_parameter_names.hrl").
+
 %% Callbacks
 -export(
     [ all/0
@@ -16,6 +18,7 @@
     , t_parse_error_no_prefix/1
     , t_parse_ok_generic_pairs/1
     , t_parse_ok_specific_oauth_params/1
+    , t_serialize/1
     ]).
 
 
@@ -44,6 +47,7 @@ groups() ->
         , t_parse_error_no_prefix
         , t_parse_ok_generic_pairs
         , t_parse_ok_specific_oauth_params
+        , t_serialize
         ],
     Properties = [],
     [ {?GROUP, Properties, Tests}
@@ -109,3 +113,34 @@ t_parse_ok_specific_oauth_params(_Cfg) ->
     Result = oauth1_parameters:of_http_header_authorization(ParamsBin),
     ct:log("Result: ~p", [Result]),
     {ok, _} = Result.
+
+t_serialize(_Cfg) ->
+    Realm            = <<"http://photos.example.net/photos">>,
+    ConsumerKey      = <<"dpf43f3p2l4k3l03">>,
+    Signature        = <<"tR3%2BTy81lMeYAr%2FFid0kMTYa%2FWM%3D">>,
+    SignatureMethod  = <<"HMAC-SHA1">>,
+    Timestamp        = <<"1191242096">>,
+    Nonce            = <<"kllo9940pd9333jh">>,
+    ParamsGiven =
+        [ {?PARAM_REALM            , Realm}
+        , {?PARAM_CONSUMER_KEY     , ConsumerKey}
+        , {?PARAM_SIGNATURE        , Signature}
+        , {?PARAM_SIGNATURE_METHOD , SignatureMethod}
+        , {?PARAM_TIMESTAMP        , Timestamp}
+        , {?PARAM_NONCE            , Nonce}
+        ],
+    ParamsGivenBin =
+        <<"OAuth"
+           " "  , "realm"                  , "=" , "\"" , Realm/binary           , "\""
+         , ", " , "oauth_consumer_key"     , "=" , "\"" , ConsumerKey/binary     , "\""
+         , ", " , "oauth_signature"        , "=" , "\"" , Signature/binary       , "\""
+         , ", " , "oauth_signature_method" , "=" , "\"" , SignatureMethod/binary , "\""
+         , ", " , "oauth_timestamp"        , "=" , "\"" , Timestamp/binary       , "\""
+         , ", " , "oauth_nonce"            , "=" , "\"" , Nonce/binary           , "\""
+        >>,
+    ParamsSerialized =
+        oauth1_parameters:to_http_header_authorization(ParamsGiven),
+    ct:log("ParamsGiven: ~p", [ParamsGiven]),
+    ct:log("ParamsGivenBin: ~p", [ParamsGivenBin]),
+    ct:log("ParamsSerialized: ~p", [ParamsSerialized]),
+    ParamsSerialized = ParamsGivenBin.
