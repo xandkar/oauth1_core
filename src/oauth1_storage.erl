@@ -34,7 +34,7 @@ put(Bucket, Key, Value) ->
     hope_result:t(binary(), error()).
 get(Bucket, Key) ->
     StorageModule = lookup_storage_module(),
-    StorageModule:put(Bucket, Key).
+    StorageModule:get(Bucket, Key).
 
 
 -spec lookup_storage_module() ->
