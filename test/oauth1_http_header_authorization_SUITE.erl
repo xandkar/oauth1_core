@@ -16,9 +16,11 @@
     , t_parse_error_empty/1
     , t_parse_error_extra_comma/1
     , t_parse_error_no_prefix/1
+    , t_parse_ok_just_oauth_string_no_params/1
     , t_parse_ok_generic_pairs/1
     , t_parse_ok_specific_oauth_params/1
     , t_serialize/1
+    , t_serialize_empty/1
     ]).
 
 
@@ -45,9 +47,11 @@ groups() ->
         , t_parse_error_empty
         , t_parse_error_extra_comma
         , t_parse_error_no_prefix
+        , t_parse_ok_just_oauth_string_no_params
         , t_parse_ok_generic_pairs
         , t_parse_ok_specific_oauth_params
         , t_serialize
+        , t_serialize_empty
         ],
     Properties = [],
     [ {?GROUP, Properties, Tests}
@@ -90,6 +94,14 @@ t_parse_error_no_prefix(_Cfg) ->
     Result = oauth1_parameters:of_http_header_authorization(ParamsBin),
     ct:log("Result: ~p", [Result]),
     {error, {invalid_format, {parser, _}}} = Result.
+
+t_parse_ok_just_oauth_string_no_params(_Cfg) ->
+    ParamsBin = <<"OAuth">>,
+    ParamsExpected = [],
+    Result = oauth1_parameters:of_http_header_authorization(ParamsBin),
+    ct:log("Result: ~p", [Result]),
+    {ok, ParamsParsed} = Result,
+    ParamsParsed = ParamsExpected.
 
 t_parse_ok_generic_pairs(_Cfg) ->
     ParamsBin = <<"OAuth k1=\"v1\", k2=\"v2\"">>,
@@ -146,3 +158,12 @@ t_serialize(_Cfg) ->
     ct:log("ParamsGivenBin: ~p", [ParamsGivenBin]),
     ct:log("ParamsSerialized: ~p", [ParamsSerialized]),
     ParamsSerialized = ParamsGivenBin.
+
+t_serialize_empty(_Cfg) ->
+    ParamsGiven    = [],
+    BinExpected    = <<"OAuth">>,
+    BinConstructed = oauth1_parameters:to_http_header_authorization(ParamsGiven),
+    ct:log("ParamsGiven: ~p"    , [ParamsGiven]),
+    ct:log("BinExpected: ~p"    , [BinExpected]),
+    ct:log("BinConstructed: ~p" , [BinConstructed]),
+    BinExpected = BinConstructed.
