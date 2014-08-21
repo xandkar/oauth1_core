@@ -251,10 +251,15 @@ of_bin(<<Data/binary>>) ->
 to_props(#t
     { id     = {Type, <<ID/binary>>}
     , secret = {Type, <<Secret/binary>>}
-    , expiry = Expiry
+    , expiry = ExpiryOpt
     }
 ) ->
     TypeBin = type_to_bin(Type),
+    Expiry =
+        case ExpiryOpt
+        of  none -> null
+        ;   {some, Timestamp} -> Timestamp
+        end,
     [ {?PROP_KEY_TYPE   , TypeBin}
     , {?PROP_KEY_ID     , ID}
     , {?PROP_KEY_SECRET , Secret}
