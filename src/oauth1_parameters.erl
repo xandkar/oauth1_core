@@ -26,8 +26,10 @@ of_http_header_authorization(<<ParamsBin/binary>>) ->
             case oauth1_http_header_authorization_parser:parse(Tokens)
             of  {ok, PairsStrs} ->
                     ToBin = fun erlang:list_to_binary/1,
-                    PairsBins = [{ToBin(K), ToBin(V)} || {K, V} <- PairsStrs],
-                    {ok, PairsBins}
+                    Decode = fun cow_qs:urldecode/1,
+                    PairsBins1 = [{ToBin(K) , ToBin(V)}  || {K, V} <- PairsStrs],
+                    PairsBins2 = [{Decode(K), Decode(V)} || {K, V} <- PairsBins1],
+                    {ok, PairsBins2}
             ;   {error, Error} ->
                     {error, {invalid_format, {parser, Error}}}
             end
@@ -49,4 +51,6 @@ to_http_header_authorization([{_K1, _V1}=Pair1 | T]) ->
 
 
 pair_to_bin({<<K/binary>>, <<V/binary>>}) ->
-    <<K/binary, "=", "\"", V/binary, "\"">>.
+    KEncoded = cow_qs:urlencode(K),
+    VEncoded = cow_qs:urlencode(V),
+    <<KEncoded/binary, "=", "\"", VEncoded/binary, "\"">>.

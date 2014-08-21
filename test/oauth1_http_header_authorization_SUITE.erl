@@ -116,8 +116,10 @@ t_parse_ok_specific_oauth_params(_Cfg) ->
 
 t_serialize(_Cfg) ->
     Realm            = <<"http://photos.example.net/photos">>,
+    RealmEncoded     = cow_qs:urlencode(Realm),
     ConsumerKey      = <<"dpf43f3p2l4k3l03">>,
-    Signature        = <<"tR3%2BTy81lMeYAr%2FFid0kMTYa%2FWM%3D">>,
+    SignatureEncoded = <<"tR3%2BTy81lMeYAr%2FFid0kMTYa%2FWM%3D">>,
+    Signature        = cow_qs:urldecode(SignatureEncoded),
     SignatureMethod  = <<"HMAC-SHA1">>,
     Timestamp        = <<"1191242096">>,
     Nonce            = <<"kllo9940pd9333jh">>,
@@ -131,9 +133,9 @@ t_serialize(_Cfg) ->
         ],
     ParamsGivenBin =
         <<"OAuth"
-           " "  , "realm"                  , "=" , "\"" , Realm/binary           , "\""
+           " "  , "realm"                  , "=" , "\"" , RealmEncoded/binary    , "\""
          , ", " , "oauth_consumer_key"     , "=" , "\"" , ConsumerKey/binary     , "\""
-         , ", " , "oauth_signature"        , "=" , "\"" , Signature/binary       , "\""
+         , ", " , "oauth_signature"        , "=" , "\"" , SignatureEncoded/binary, "\""
          , ", " , "oauth_signature_method" , "=" , "\"" , SignatureMethod/binary , "\""
          , ", " , "oauth_timestamp"        , "=" , "\"" , Timestamp/binary       , "\""
          , ", " , "oauth_nonce"            , "=" , "\"" , Nonce/binary           , "\""

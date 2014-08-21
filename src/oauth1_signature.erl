@@ -100,7 +100,10 @@ cons(#oauth1_signature_args_cons
     { method = Method
     , key    = Key
     , text   = Text
-    , digest = cow_qs:urlencode(DigestBase64)
+    % RFC 5849 says that digest must be url-encoded. We postpone doing so until
+    % serialization by oauth1_parameters module (which url-encodes _all_
+    % parameter values).
+    , digest = DigestBase64
     }.
 
 -spec get_digest(t()) ->
