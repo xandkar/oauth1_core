@@ -10,6 +10,7 @@ Rootsymbol
 oauth_params.
 
 
+oauth_params -> oauth       : [].
 oauth_params -> oauth pairs : '$2'.
 
 pairs -> pair             : ['$1'].
