@@ -23,6 +23,9 @@
     , initiate_args_of_params/2
 
     , validate_resource_request/1
+
+    % Error serialization
+    , error_to_bin/1
     ]).
 
 
@@ -491,6 +494,54 @@ validate_resource_request(#oauth1_server_args_validate_resource_request
         ],
     hope_result:pipe(Steps, #request_validation_state{}).
 
+-spec error_to_bin(error()) ->
+    binary().
+error_to_bin(Error) ->
+    Encode = fun (ErrorValue) -> jsx:encode([{<<"error">>, ErrorValue}]) end,
+    case Error
+    of  {unauthorized, ErrorUnauthorized} ->
+            Props = error_unauthorized_to_bin(ErrorUnauthorized),
+            Encode(Props)
+    ;   {bad_request , ErrorsBadReq} ->
+            Props = lists:map(fun error_bad_request_to_props/1, ErrorsBadReq),
+            Encode(Props)
+    end.
+
+-spec error_unauthorized_to_bin(error_unauthorized()) ->
+    binary().
+error_unauthorized_to_bin(signature_invalid)          -> <<"signature_invalid">>;
+error_unauthorized_to_bin(client_credentials_invalid) -> <<"client_credentials_invalid">>;
+error_unauthorized_to_bin(token_invalid)              -> <<"token_invalid">>;
+error_unauthorized_to_bin(token_expired)              -> <<"token_expired">>;
+error_unauthorized_to_bin(verifier_invalid)           -> <<"verifier_invalid">>;
+error_unauthorized_to_bin(nonce_invalid)              -> <<"nonce_invalid">>;
+error_unauthorized_to_bin(nonce_used)                 -> <<"nonce_used">>.
+
+-spec error_bad_request_to_props(error_bad_request()) ->
+    [{K, V}]
+    when K :: binary()
+       , V :: binary() | [binary()]
+       .
+error_bad_request_to_props(Error) ->
+    case Error
+    of  {parameters_unsupported   , Params} ->
+    [{<<"parameters_unsupported">>, Params}]
+
+    ;   {parameters_missing   , Params} ->
+    [{<<"parameters_missing">>, Params}]
+
+    ;   {parameters_duplicated   , Params} ->
+    [{<<"parameters_duplicated">>, Params}]
+
+    ;   {signature_method_unsupported   , <<SigMeth/binary>>} ->
+    [{<<"signature_method_unsupported">>,   SigMeth}]
+
+    ;   {callback_uri_invalid   , <<URI/binary>>} ->
+    [{<<"callback_uri_invalid">>,   URI}]
+
+    ;   {timestamp_invalid   , <<Timestamp/binary>>} ->
+    [{<<"timestamp_invalid">>,   Timestamp}]
+    end.
 
 %%=============================================================================
 %% Helpers
