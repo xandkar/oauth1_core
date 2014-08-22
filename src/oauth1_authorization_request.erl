@@ -104,7 +104,7 @@ fetch({tmp, <<TokenID/binary>>}=Token) ->
             ;   {ok, Json} ->
                     {value, {?JSON_KEY_CLIENT, <<ClientID/binary>>}} =
                         lists:keysearch(?JSON_KEY_CLIENT, 1, Json),
-                    {value, {?JSON_KEY_CLIENT, <<Realm/binary>>}} =
+                    {value, {?JSON_KEY_REALM, <<Realm/binary>>}} =
                         lists:keysearch(?JSON_KEY_REALM, 1, Json),
                     T = cons({client, ClientID}, Token, Realm),
                     {ok, T}
