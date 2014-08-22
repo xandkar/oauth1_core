@@ -44,6 +44,9 @@
 -define(JSON_KEY_CLIENT, <<"client">>).
 -define(JSON_KEY_REALM , <<"realm">>).
 
+%% Module abbreviations
+-define(dict, hope_kv_list).
+
 
 -spec cons(client(), token(), realm()) ->
     t().
@@ -102,10 +105,9 @@ fetch({tmp, <<TokenID/binary>>}=Token) ->
             ;   {ok, {incomplete, _}} ->
                     ErrorBadData
             ;   {ok, Json} ->
-                    {value, {?JSON_KEY_CLIENT, <<ClientID/binary>>}} =
-                        lists:keysearch(?JSON_KEY_CLIENT, 1, Json),
-                    {value, {?JSON_KEY_REALM, <<Realm/binary>>}} =
-                        lists:keysearch(?JSON_KEY_REALM, 1, Json),
+                    D = ?dict:of_kv_list(Json),
+                    {some, <<ClientID/binary>>} = ?dict:get(D, ?JSON_KEY_CLIENT),
+                    {some, <<Realm/binary>>}    = ?dict:get(D, ?JSON_KEY_REALM),
                     T = cons({client, ClientID}, Token, Realm),
                     {ok, T}
             end
