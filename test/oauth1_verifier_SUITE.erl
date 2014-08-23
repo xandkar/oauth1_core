@@ -11,6 +11,7 @@
 %% Tests
 -export(
     [ t_basic_uniqueness_amd_storage/1
+    , t_low_entropy/1
     ]).
 
 
@@ -35,6 +36,7 @@ all() ->
 groups() ->
     Tests =
         [ t_basic_uniqueness_amd_storage
+        , t_low_entropy
         % TODO: Test storage errors
         ],
     Properties = [],
@@ -63,3 +65,10 @@ t_basic_uniqueness_amd_storage(_Cfg) ->
     {ok, ok}           = oauth1_verifier:store(VerifierA),
     {ok, VerifierA}    = oauth1_verifier:fetch(TmpTokenID),
     {error, not_found} = oauth1_verifier:fetch({tmp, <<"nonexistent">>}).
+
+t_low_entropy(_Cfg) ->
+    ok = meck:new(oauth1_random_string),
+    FakeGenerate = fun () -> {error, low_entropy} end,
+    ok = meck:expect(oauth1_random_string, generate, FakeGenerate),
+    {error, low_entropy} = oauth1_verifier:generate({tmp, <<"faketmptokid">>}),
+    ok = meck:unload(oauth1_random_string).
