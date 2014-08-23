@@ -105,4 +105,5 @@ t_storage(Cfg) ->
     {some, Callback}   = hope_kv_list:get(Cfg, ?KEY_CALLBACK),
     {some, TmpTokenID} = hope_kv_list:get(Cfg, ?KEY_TMP_TOKEN_ID),
     {ok, ok}           = oauth1_callback:store(Callback),
-    {ok, Callback}     = oauth1_callback:fetch(TmpTokenID).
+    {ok, Callback}     = oauth1_callback:fetch(TmpTokenID),
+    {error, not_found} = oauth1_callback:fetch({tmp, <<"bogus">>}).
