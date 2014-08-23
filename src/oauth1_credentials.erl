@@ -60,6 +60,7 @@
 -type parsing_error() ::
       {data_format_invalid, binary()}
     | {field_missing      , binary()}
+    | {credentials_type_unknown, binary()}
     .
 
 -type retrival_error() ::
@@ -174,6 +175,8 @@ fetch({Type, <<ID/binary>>}) ->
             of  {error, {data_format_invalid, _}=ParsingError} ->
                     {error, {internal, ParsingError}}
             ;   {error, {field_missing, _}=ParsingError} ->
+                    {error, {internal, ParsingError}}
+            ;   {error, {credentials_type_unknown, _}=ParsingError} ->
                     {error, {internal, ParsingError}}
             ;   {ok, #t{expiry=ExpiryOpt}=T} ->
                     ExpiryToOkOrError =
