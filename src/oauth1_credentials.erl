@@ -241,8 +241,8 @@ of_bin(<<Data/binary>>) ->
     Decoder = hope_result:lift_exn(fun jsx:decode/1),
     case Decoder(Data)
     % TODO: Log the actual error
-    of  {error, _}            -> ErrorBadData
-    ;   {ok, Props}           -> of_props(Props)
+    of  {error, _}  -> ErrorBadData
+    ;   {ok, Props} -> of_props(Props)
     end.
 
 -spec to_props(t(credentials_type())) ->
