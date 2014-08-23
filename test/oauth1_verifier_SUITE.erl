@@ -37,7 +37,6 @@ groups() ->
     Tests =
         [ t_basic_uniqueness_amd_storage
         , t_low_entropy
-        % TODO: Test storage errors
         ],
     Properties = [],
     [ {?GROUP, Properties, Tests}
