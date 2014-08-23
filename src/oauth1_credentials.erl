@@ -273,7 +273,7 @@ of_props(Props) ->
     MakeFieldGetter =
         fun (Key) ->
             fun (Acc) ->
-                case kv_list_find(Props, Key)
+                case hope_kv_list:get(Props, Key)
                 of  {some, Value} -> {ok, [Value | Acc]}
                 ;   none          -> {error, {field_missing, Key}}
                 end
@@ -312,15 +312,4 @@ of_props(Props) ->
                         },
                     {ok, T}
             end
-    end.
-
-
--spec kv_list_find([{K, V}], K) ->
-    hope_option:t(V).
-kv_list_find(List, Key) ->
-    case lists:keysearch(Key, 1, List)
-    of  {value, {Key, Value}} ->
-            {some, Value}
-    ;   false ->
-            none
     end.
