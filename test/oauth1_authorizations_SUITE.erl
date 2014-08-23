@@ -14,15 +14,18 @@
 -export(
     [ t_crud/1
     , t_storage/1
+    , t_storage_corrupt/1
     ]).
 
+
+-define(APP, oauth1_core).
 
 -define(APP_DEPS,
     [ crypto
     , cowlib
     , bstr
     , hope
-    , oauth1_core
+    , ?APP
     ]).
 
 -define(GROUP, oauth1_authorizations).
@@ -42,7 +45,8 @@ groups() ->
     Tests =
         [ t_crud
         , t_storage
-        % TODO: Test storage errors
+        , t_storage_corrupt
+        % TODO: Test more storage errors
         ],
     Properties = [],
     [ {?GROUP, Properties, Tests}
@@ -97,3 +101,12 @@ t_storage(Cfg) ->
     {some, ClientID} = hope_kv_list:get(Cfg, ?LIT_CLIENT_ID),
     {ok, ok}         = oauth1_authorizations:store(Auths),
     {ok, Auths}      = oauth1_authorizations:fetch(ClientID).
+
+t_storage_corrupt(Cfg) ->
+    ok = oauth1_storage_corrupt:start(),
+    {some, Auths}    = hope_kv_list:get(Cfg, ?LIT_AUTHS),
+    {some, ClientID} = hope_kv_list:get(Cfg, ?LIT_CLIENT_ID),
+    {ok, ok}         = oauth1_authorizations:store(Auths),
+    ok = oauth1_storage_corrupt:set_next_value(<<"garbage">>),
+    {error, {data_format_invalid, _}} = oauth1_authorizations:fetch(ClientID),
+    ok = oauth1_storage_corrupt:stop().
