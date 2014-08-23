@@ -15,6 +15,7 @@
     [ t_get_client/1
     , t_get_realm/1
     , t_storage/1
+    , t_storage_corrupt/1
     ]).
 
 
@@ -46,7 +47,7 @@ groups() ->
         [ t_get_client
         , t_get_realm
         , t_storage
-        % TODO: Test storage errors
+        , t_storage_corrupt
         ],
     Properties = [],
     [ {?GROUP, Properties, Tests}
@@ -94,4 +95,17 @@ t_storage(Cfg) ->
     {some, AuthReq}    = hope_kv_list:get(Cfg, ?LIT_AUTH_REQ),
     {some, TmpTokenID} = hope_kv_list:get(Cfg, ?LIT_TMP_TOKEN_ID),
     {ok, ok}      = oauth1_authorization_request:store(AuthReq),
-    {ok, AuthReq} = oauth1_authorization_request:fetch(TmpTokenID).
+    {ok, AuthReq} = oauth1_authorization_request:fetch(TmpTokenID),
+    {error, not_found} = oauth1_authorization_request:fetch({tmp, <<"bogus">>}).
+
+t_storage_corrupt(Cfg) ->
+    ok = oauth1_mock_storage:start(),
+    {some, AuthReq}    = hope_kv_list:get(Cfg, ?LIT_AUTH_REQ),
+    {some, TmpTokenID} = hope_kv_list:get(Cfg, ?LIT_TMP_TOKEN_ID),
+    ok = oauth1_mock_storage:set_next_result_put({ok, ok}),
+    {ok, ok} = oauth1_authorization_request:store(AuthReq),
+    MockData = <<"garbage">>,
+    ok = oauth1_mock_storage:set_next_result_get({ok, MockData}),
+    FetchResult = oauth1_authorization_request:fetch(TmpTokenID),
+    {error, {data_format_invalid, MockData}} = FetchResult,
+    ok = oauth1_mock_storage:stop().
