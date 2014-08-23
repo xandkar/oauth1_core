@@ -14,7 +14,7 @@
 -export(
     [ t_get_client/1
     , t_get_realm/1
-    , t_store_and_fetch/1
+    , t_storage/1
     ]).
 
 
@@ -45,7 +45,7 @@ groups() ->
     Tests =
         [ t_get_client
         , t_get_realm
-        , t_store_and_fetch
+        , t_storage
         % TODO: Test storage errors
         ],
     Properties = [],
@@ -90,7 +90,7 @@ t_get_realm(Cfg) ->
     {some, Realm}   = hope_kv_list:get(Cfg, ?LIT_REALM),
     Realm = oauth1_authorization_request:get_realm(AuthReq).
 
-t_store_and_fetch(Cfg) ->
+t_storage(Cfg) ->
     {some, AuthReq}    = hope_kv_list:get(Cfg, ?LIT_AUTH_REQ),
     {some, TmpTokenID} = hope_kv_list:get(Cfg, ?LIT_TMP_TOKEN_ID),
     {ok, ok}      = oauth1_authorization_request:store(AuthReq),
