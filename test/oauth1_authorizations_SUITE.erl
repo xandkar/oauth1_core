@@ -103,10 +103,11 @@ t_storage(Cfg) ->
     {ok, Auths}      = oauth1_authorizations:fetch(ClientID).
 
 t_storage_corrupt(Cfg) ->
-    ok = oauth1_storage_corrupt:start(),
+    ok = oauth1_mock_storage:start(),
     {some, Auths}    = hope_kv_list:get(Cfg, ?LIT_AUTHS),
     {some, ClientID} = hope_kv_list:get(Cfg, ?LIT_CLIENT_ID),
+    ok               = oauth1_mock_storage:set_next_result_put({ok, ok}),
     {ok, ok}         = oauth1_authorizations:store(Auths),
-    ok = oauth1_storage_corrupt:set_next_value(<<"garbage">>),
+    ok               = oauth1_mock_storage:set_next_result_get({ok, <<"garbage">>}),
     {error, {data_format_invalid, _}} = oauth1_authorizations:fetch(ClientID),
-    ok = oauth1_storage_corrupt:stop().
+    ok = oauth1_mock_storage:stop().
