@@ -13,6 +13,7 @@
 %% Test cases
 -export(
     [ t_generate_and_store/1
+    , t_fetch_expired/1
     , t_storage_error_corrupt/1
     , t_storage_error_io/1
     ]).
@@ -47,11 +48,11 @@ all() ->
 groups() ->
     Tests =
         [ t_generate_and_store
+        , t_fetch_expired
         , t_storage_error_corrupt
         , t_storage_error_io
         % TODO: Error cases:
         %   - string generation error (low entropy)
-        %   - token expired
         ],
     Properties = [],
     [ {?TYPE_CLIENT , Properties, Tests}
@@ -94,6 +95,34 @@ t_generate_and_store(Cfg1) ->
     ID1          = ID2,
     Secret1      = Secret2,
     Creds1       = Creds2.
+
+t_fetch_expired(Cfg) ->
+    ok = oauth1_mock_storage:start(),
+    {some, Type} = hope_kv_list:get(Cfg, ?TYPE),
+    TypeBin = atom_to_binary(Type, latin1),
+    IDBin = <<"fake-id">>,
+    ID = {Type, IDBin},
+    Expiry =
+        case Type
+        of  client -> null
+        ;   tmp    -> 0
+        ;   token  -> 0
+        end,
+    DataBadType =
+        jsx:encode(
+        [ {<<"type">>   , TypeBin}
+        , {<<"id">>     , IDBin}
+        , {<<"secret">> , <<"thecityofzinj">>}
+        , {<<"expiry">> , Expiry}
+        ]),
+    ok = oauth1_mock_storage:set_next_result_get({ok, DataBadType}),
+    FetchResult = oauth1_credentials:fetch(ID),
+    case {Type, FetchResult}
+    of  {client , {ok, _}} -> ok
+    ;   {tmp    , {error, token_expired}} -> ok
+    ;   {token  , {error, token_expired}} -> ok
+    end,
+    ok = oauth1_mock_storage:stop().
 
 t_storage_error_corrupt(_Cfg) ->
     ok = oauth1_mock_storage:start(),
