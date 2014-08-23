@@ -20,7 +20,8 @@
 -spec generate() ->
     hope_result:t(t(), error()).
 generate() ->
-    Generator = hope_result:lift_exn(fun crypto:strong_rand_bytes/1),
+    StrongRandBytes = fun oauth1_mockable_crypto:strong_rand_bytes/1,
+    Generator = hope_result:lift_exn(StrongRandBytes),
     case Generator(1024)
     of  {error, {error, low_entropy}=Error} ->
             Error
