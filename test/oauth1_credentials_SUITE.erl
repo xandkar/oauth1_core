@@ -13,6 +13,8 @@
 %% Test cases
 -export(
     [ t_generate_and_store/1
+    , t_storage_error_corrupt/1
+    , t_storage_error_io/1
     ]).
 
 
@@ -45,10 +47,11 @@ all() ->
 groups() ->
     Tests =
         [ t_generate_and_store
+        , t_storage_error_corrupt
+        , t_storage_error_io
         % TODO: Error cases:
         %   - string generation error (low entropy)
-        %   - storage errors
-        %   - invalid data format upon retrival from storage
+        %   - token expired
         ],
     Properties = [],
     [ {?TYPE_CLIENT , Properties, Tests}
@@ -83,6 +86,7 @@ t_generate_and_store(Cfg1) ->
     ID1          = oauth1_credentials:get_id(Creds1),
     Secret1      = oauth1_credentials:get_secret(Creds1),
 
+    {error, not_found} = oauth1_credentials:fetch({client, <<"bogus">>}),
     {ok, Creds2} = oauth1_credentials:fetch(ID1),
     ID2          = oauth1_credentials:get_id(Creds2),
     Secret2      = oauth1_credentials:get_secret(Creds2),
@@ -90,3 +94,39 @@ t_generate_and_store(Cfg1) ->
     ID1          = ID2,
     Secret1      = Secret2,
     Creds1       = Creds2.
+
+t_storage_error_corrupt(_Cfg) ->
+    ok = oauth1_mock_storage:start(),
+    ClientID = {client, <<"fake-client-id">>},
+
+    DataGarbage = <<"garbage">>,
+    ok = oauth1_mock_storage:set_next_result_get({ok, DataGarbage}),
+    FetchResult1 = oauth1_credentials:fetch(ClientID),
+    {error, {internal, {data_format_invalid, DataGarbage}}} = FetchResult1,
+
+    DataIncomplete = jsx:encode([{<<"secret">>, <<"whoshotjfk">>}]),
+    ok = oauth1_mock_storage:set_next_result_get({ok, DataIncomplete}),
+    FetchResult2 = oauth1_credentials:fetch(ClientID),
+    {error, {internal, {field_missing, _}}} = FetchResult2,
+
+    {client, ClientIDBin} = ClientID,
+    BadType = <<"bogus-credentials-types">>,
+    DataBadType =
+        jsx:encode(
+        [ {<<"type">>   , BadType}
+        , {<<"id">>     , ClientIDBin}
+        , {<<"secret">> , <<"thecityofzinj">>}
+        , {<<"expiry">> , <<"123">>}
+        ]),
+    ok = oauth1_mock_storage:set_next_result_get({ok, DataBadType}),
+    FetchResult3 = oauth1_credentials:fetch(ClientID),
+    {error, {internal, {credentials_type_unknown, BadType}}} = FetchResult3,
+
+    ok = oauth1_mock_storage:stop().
+
+t_storage_error_io(Cfg) ->
+    {some, Type} = hope_kv_list:get(Cfg, ?TYPE),
+    ok = oauth1_mock_storage:start(),
+    ok = oauth1_mock_storage:set_next_result_put({error, {io_error, foobar}}),
+    {error, {io_error, foobar}} = oauth1_credentials:generate_and_store(Type),
+    ok = oauth1_mock_storage:stop().
