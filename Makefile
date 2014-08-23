@@ -16,7 +16,12 @@
 ci: \
 	deps \
 	compile_all \
+	remove_cover_spec_from_deps \
 	test
+
+# A kludge to avoid the conflict of cover.spec files with Travis' rebar
+remove_cover_spec_from_deps:
+	@find deps -name cover.spec -exec rm '{}' \;
 
 select_plt:
 	@./plt/select.sh
