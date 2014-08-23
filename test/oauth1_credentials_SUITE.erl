@@ -13,6 +13,7 @@
 %% Test cases
 -export(
     [ t_generate_and_store/1
+    , t_generate_error/1
     , t_fetch_expired/1
     , t_storage_error_corrupt/1
     , t_storage_error_io/1
@@ -48,11 +49,10 @@ all() ->
 groups() ->
     Tests =
         [ t_generate_and_store
+        , t_generate_error
         , t_fetch_expired
         , t_storage_error_corrupt
         , t_storage_error_io
-        % TODO: Error cases:
-        %   - string generation error (low entropy)
         ],
     Properties = [],
     [ {?TYPE_CLIENT , Properties, Tests}
@@ -95,6 +95,14 @@ t_generate_and_store(Cfg1) ->
     ID1          = ID2,
     Secret1      = Secret2,
     Creds1       = Creds2.
+
+t_generate_error(Cfg) ->
+    {some, Type} = hope_kv_list:get(Cfg, ?TYPE),
+    ok = meck:new(oauth1_random_string),
+    FakeGenerate = fun () -> {error, low_entropy} end,
+    ok = meck:expect(oauth1_random_string, generate, FakeGenerate),
+    {error, low_entropy} = oauth1_credentials:generate_and_store(Type),
+    ok = meck:unload(oauth1_random_string).
 
 t_fetch_expired(Cfg) ->
     ok = oauth1_mock_storage:start(),
