@@ -242,7 +242,6 @@ of_bin(<<Data/binary>>) ->
     case Decoder(Data)
     % TODO: Log the actual error
     of  {error, _}            -> ErrorBadData
-    ;   {ok, {incomplete, _}} -> ErrorBadData
     ;   {ok, Props}           -> of_props(Props)
     end.
 

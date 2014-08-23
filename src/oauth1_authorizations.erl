@@ -93,9 +93,7 @@ fetch({client, <<ClientID/binary>>}=Client) ->
             ErrorBadData = {error, {data_format_invalid, RealmsJson}},
             Decoder = hope_result:lift_exn(fun jsx:decode/1),
             case Decoder(RealmsJson)
-            of  {ok, {incomplete, _}} ->
-                    ErrorBadData
-            ;   {ok, Realms} when is_list(Realms) ->
+            of  {ok, Realms} when is_list(Realms) ->
                     case lists:all(fun erlang:is_binary/1, Realms)
                     of  true ->
                             T = #t

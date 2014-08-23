@@ -102,8 +102,6 @@ fetch({tmp, <<TokenID/binary>>}=Token) ->
             of  {error, _} ->
                     % TODO: Log the actual error
                     ErrorBadData
-            ;   {ok, {incomplete, _}} ->
-                    ErrorBadData
             ;   {ok, Json} ->
                     D = ?dict:of_kv_list(Json),
                     {some, <<ClientID/binary>>} = ?dict:get(D, ?JSON_KEY_CLIENT),
