@@ -68,6 +68,7 @@ fetch({tmp, <<Token/binary>>}) ->
     of  {error, _}=Error ->
             Error
     ;   {ok, UriBin} ->
+            % TODO: Handle parsing errors (return data_format_invalid)
             {ok, Uri} = ?uri:of_bin(UriBin),
             T = #t
                 { token = {tmp, Token}
