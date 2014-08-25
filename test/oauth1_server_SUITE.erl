@@ -17,6 +17,8 @@
     , t_register_new_client__error_low_entropy/1
     , t_register_new_client__error_io/1
 
+    , t_initiate_ok/1
+
     , t_initiate_args_of_params__error__badreq__params_unsupported/1
     , t_initiate_args_of_params__error__badreq__params_missing/1
     , t_initiate_args_of_params__error__badreq__params_dups/1
@@ -51,6 +53,8 @@ groups() ->
         [ t_register_new_client__ok
         , t_register_new_client__error_low_entropy
         , t_register_new_client__error_io
+
+        , t_initiate_ok
 
         , t_initiate_args_of_params__error__badreq__params_unsupported
         , t_initiate_args_of_params__error__badreq__params_missing
@@ -109,6 +113,51 @@ t_register_new_client__error_io(_Cfg) ->
     ok = oauth1_mock_storage:set_next_result_put(IOError),
     IOError = oauth1_server:register_new_client(),
     ok = oauth1_mock_storage:stop().
+
+
+%% ----------------------------------------------------------------------------
+%% initiate/1
+%% ----------------------------------------------------------------------------
+
+t_initiate_ok(_Cfg) ->
+    ClientIDBin     = <<"hero-of-kvatch">>,
+    ClientSecretBin = <<"thereisnosword">>,
+    ClientID        = {client, ClientIDBin},
+    ClientCreds = oauth1_credentials:cons(client, ClientIDBin, ClientSecretBin),
+    {ok, ok} = oauth1_credentials:store(ClientCreds),
+
+    Realm = <<"oblivion">>,
+    Host  = <<"server">>,
+    {ok, URI} = oauth1_uri:of_bin(<<"https://", Host/binary, "/initiate">>),
+    {ok, ClientCallbackURI} = oauth1_uri:of_bin(<<"https://client/ready">>),
+
+    Resource            = oauth1_resource:cons(Realm, URI),
+    % TODO: Verify this signature against hueniverse guide:
+    Signature           = <<"HaP8Yb4PkHfi0HXHMKVZJUKVvGY=">>,
+    SignatureMethod     = 'HMAC_SHA1',
+    Timestamp           = 123456789,
+    Nonce               = <<"foofoobahbah">>,
+    VersionOpt          = none,
+
+    Args = #oauth1_server_args_initiate
+        { resource            = Resource
+        , consumer_key        = ClientID
+        , signature           = Signature
+        , signature_method    = SignatureMethod
+        , timestamp           = Timestamp
+        , nonce               = Nonce
+        , client_callback_uri = ClientCallbackURI
+        , host                = Host
+        , version             = VersionOpt
+        },
+    {ok, {TmpCreds, false=_CallbackConfirmed}} = oauth1_server:initiate(Args),
+    TmpTokID = oauth1_credentials:get_id(TmpCreds),
+    {ok, TmpCreds} = oauth1_credentials:fetch(TmpTokID),
+    {ok, Callback} = oauth1_callback:fetch(TmpTokID),
+    ClientCallbackURIFetched = oauth1_callback:get_uri(Callback),
+    [{<<"oauth_token">>, _}] = oauth1_uri:get_query(ClientCallbackURIFetched),
+    ClientCallbackURI        = oauth1_uri:set_query(ClientCallbackURIFetched, []),
+    ok.
 
 
 %% ----------------------------------------------------------------------------
