@@ -191,7 +191,7 @@ initiate(#oauth1_server_args_initiate
                       Error
               ;   {ok, ok} ->
                       IsCallbackConfirmed = false,
-                      {ok, { TokenID
+                      {ok, { Token
                            , IsCallbackConfirmed
                            }
                       }
