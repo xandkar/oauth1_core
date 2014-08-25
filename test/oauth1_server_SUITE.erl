@@ -13,7 +13,11 @@
 
 %% Tests
 -export(
-    [ t_initiate_args_of_params__error__badreq__params_unsupported/1
+    [ t_register_new_client__ok/1
+    , t_register_new_client__error_low_entropy/1
+    , t_register_new_client__error_io/1
+
+    , t_initiate_args_of_params__error__badreq__params_unsupported/1
     , t_initiate_args_of_params__error__badreq__params_missing/1
     , t_initiate_args_of_params__error__badreq__params_dups/1
     , t_initiate_args_of_params__error__badreq__params_missing_and_dups/1
@@ -44,7 +48,11 @@ all() ->
 
 groups() ->
     Tests =
-        [ t_initiate_args_of_params__error__badreq__params_unsupported
+        [ t_register_new_client__ok
+        , t_register_new_client__error_low_entropy
+        , t_register_new_client__error_io
+
+        , t_initiate_args_of_params__error__badreq__params_unsupported
         , t_initiate_args_of_params__error__badreq__params_missing
         , t_initiate_args_of_params__error__badreq__params_dups
         , t_initiate_args_of_params__error__badreq__params_missing_and_dups
@@ -71,6 +79,41 @@ end_per_suite(_Cfg) ->
 %%=============================================================================
 %% Tests
 %%=============================================================================
+
+%% ----------------------------------------------------------------------------
+%% register_new_client/0
+%% ----------------------------------------------------------------------------
+
+t_register_new_client__ok(_Cfg) ->
+    {ok, Pair} = oauth1_server:register_new_client(),
+    ct:log("Pair: ~p", [Pair]),
+    { {client, <<_/binary>>}=ID
+    , {client, <<_/binary>>}=Secret
+    } = Pair,
+    {ok, Creds} = oauth1_credentials:fetch(ID),
+    ID     = oauth1_credentials:get_id(Creds),
+    Secret = oauth1_credentials:get_secret(Creds),
+    ok.
+
+t_register_new_client__error_low_entropy(_Cfg) ->
+    MockModule = oauth1_credentials,
+    ok = meck:new(MockModule),
+    FakeGenAndStore = fun (client) -> {error, low_entropy} end,
+    ok = meck:expect(MockModule, generate_and_store, FakeGenAndStore),
+    {error, low_entropy} = oauth1_server:register_new_client(),
+    ok = meck:unload(MockModule).
+
+t_register_new_client__error_io(_Cfg) ->
+    ok = oauth1_mock_storage:start(),
+    IOError = {error, {io_error, foobar}},
+    ok = oauth1_mock_storage:set_next_result_put(IOError),
+    IOError = oauth1_server:register_new_client(),
+    ok = oauth1_mock_storage:stop().
+
+
+%% ----------------------------------------------------------------------------
+%% initiate_args_of_params/2
+%% ----------------------------------------------------------------------------
 
 t_initiate_args_of_params__error__badreq__params_unsupported(_Cfg) ->
     {ok, ResourceURI} = oauth1_uri:of_bin(<<"http://foo/bar">>),
