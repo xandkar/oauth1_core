@@ -10,6 +10,7 @@
       , bstr
       , cowlib
       ]}
+  , {mod, {oauth1_core_app, []}}
   , {env,
       [ {storage_module                       , oauth1_storage_ets}
       , {storage_bucket_callback              , <<"oauth1-callback">>}
