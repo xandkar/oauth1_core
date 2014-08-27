@@ -4,16 +4,23 @@
 -export(
     [ all/0
     , groups/0
+    , init_per_suite/1
+    , end_per_suite/1
     ]).
 
 %% Tests
 -export(
-    [ t_put_and_get/1
-    , t_get_not_found_in_new_bucket/1
-    , t_get_not_found_in_existing_bucket/1
+    [ t_crud/1
     ]).
 
 
+-define(APP_DEPS,
+    [ crypto
+    , cowlib
+    , bstr
+    , hope
+    , oauth1_core
+    ]).
 -define(GROUP, oauth1_storage).
 
 
@@ -26,35 +33,35 @@ all() ->
 
 groups() ->
     Tests =
-        [ t_put_and_get
-        , t_get_not_found_in_new_bucket
-        , t_get_not_found_in_existing_bucket
+        [ t_crud
         ],
     Properties = [],
     [ {?GROUP, Properties, Tests}
     ].
+
+init_per_suite(Cfg) ->
+    StartApp = fun (App) -> ok = application:start(App) end,
+    ok = lists:foreach(StartApp, ?APP_DEPS),
+    Cfg.
+
+end_per_suite(_Cfg) ->
+    StopApp = fun (App) -> ok = application:stop(App) end,
+    ok = lists:foreach(StopApp, lists:reverse(?APP_DEPS)).
 
 
 %%=============================================================================
 %% Tests
 %%=============================================================================
 
-t_put_and_get(_Cfg) ->
-    Bucket = <<"foo">>,
-    Key    = <<"bar">>,
-    Value  = <<"baz">>,
-    {ok, ok}    = oauth1_storage:put(Bucket, Key, Value),
-    {ok, Value} = oauth1_storage:get(Bucket, Key).
-
-t_get_not_found_in_new_bucket(_Cfg) ->
-    Bucket = <<"foo">>,
-    Key    = <<"bar">>,
+t_crud(_Cfg) ->
+    Bucket  = <<"foo">>,
+    Key     = <<"bar">>,
+    Value1  = <<"baz">>,
+    Value2  = <<"qux">>,
+    {error, not_found} = oauth1_storage:get(Bucket, Key),
+    {ok, ok}           = oauth1_storage:put(Bucket, Key, Value1),
+    {ok, Value1}       = oauth1_storage:get(Bucket, Key),
+    {ok, ok}           = oauth1_storage:put(Bucket, Key, Value2),
+    {ok, Value2}       = oauth1_storage:get(Bucket, Key),
+    {ok, ok}           = oauth1_storage:delete(Bucket, Key),
     {error, not_found} = oauth1_storage:get(Bucket, Key).
-
-t_get_not_found_in_existing_bucket(_Cfg) ->
-    Bucket = <<"foo">>,
-    Key1   = <<"bar">>,
-    Key2   = <<"baz">>,
-    % The first put to a bucket, is expected to create it if it does not exist.
-    {ok, ok}           = oauth1_storage:put(Bucket, Key1, <<"qux">>),
-    {error, not_found} = oauth1_storage:get(Bucket, Key2).

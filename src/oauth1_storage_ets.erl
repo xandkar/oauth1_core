@@ -7,48 +7,51 @@
 -export(
     [ put/3
     , get/2
+    , delete/2
+    , start/0
+    , stop/0
     ]).
 
 
--spec put(binary(), binary(), binary()) ->
-    hope_result:t(ok, ?storage:error()).
-put(Bucket, Key, Value) ->
-    Table = table_of_bucket(Bucket),
-    Insert = fun () -> true = ets:insert(Table, {Key, Value}), {ok, ok} end,
-    try
-        Insert()
-    catch error:badarg ->
-        ok = table_create(Table),
-        Insert()
-    end.
+-define(TABLE, oauth1_core_storage_ets).
 
--spec get(binary(), binary()) ->
-    hope_result:t(binary(), ?storage:error()).
-get(Bucket, Key) ->
-    Table = table_of_bucket(Bucket),
-    try
-        case ets:lookup(Table, Key)
-        of  []             -> {error, not_found}
-        ;   [{Key, Value}] -> {ok, Value}
-        end
-    catch error:badarg ->
-        {error, not_found}
-    end.
+%% TODO: Wrap ETS calls in try-catch and return exceptions as io errors.
 
-
--spec table_of_bucket(binary()) ->
-    atom().
-table_of_bucket(<<Bucket/binary>>) ->
-    binary_to_atom(Bucket, utf8).
-
--spec table_create(atom()) ->
-    ok.
-table_create(Name) ->
+start() ->
     Options =
         [ set
+        , public
         , named_table
         , {write_concurrency, true}
         , { read_concurrency, true}
         ],
-    Name = ets:new(Name, Options),
-    ok.
+    ?TABLE = ets:new(?TABLE, Options),
+    {ok, ok}.
+
+stop() ->
+    true = ets:delete(?TABLE),
+    {ok, ok}.
+
+put(Bucket, Key0, Value) ->
+    Key = join_bucket_and_key(Bucket, Key0),
+    true = ets:insert(?TABLE, {Key, Value}),
+    {ok, ok}.
+
+get(Bucket, Key0) ->
+    Key = join_bucket_and_key(Bucket, Key0),
+    case ets:lookup(?TABLE, Key)
+    of  []             -> {error, not_found}
+    ;   [{Key, Value}] -> {ok, Value}
+    end.
+
+delete(Bucket, Key0) ->
+    Key = join_bucket_and_key(Bucket, Key0),
+    true = ets:delete(?TABLE, Key),
+    {ok, ok}.
+
+
+-spec join_bucket_and_key(Bin, Bin) ->
+    Bin
+    when Bin :: binary().
+join_bucket_and_key(<<Bucket/binary>>, <<Key/binary>>) ->
+    <<Bucket/binary, "/", Key/binary>>.
