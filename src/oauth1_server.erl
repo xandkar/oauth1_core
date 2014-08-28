@@ -34,9 +34,7 @@
 %%=============================================================================
 
 -type error_bad_request() ::
-      {parameters_unsupported       , [binary()]}
-    | {parameters_missing           , [binary()]}
-    | {parameters_duplicated        , [binary()]}
+      ?parameters:presence_error()
     | {signature_method_unsupported , binary()}
     | {callback_uri_invalid         , binary()}
     | {timestamp_invalid            , binary()}
@@ -210,7 +208,7 @@ initiate(#oauth1_server_args_initiate
 initiate_args_of_params(ResourceURI, ParamPairsGiven) ->
     CheckParamPresence =
         fun (ok) ->
-            ParamsRequired =
+            Required =
                 [ ?PARAM_REALM
                 , ?PARAM_CONSUMER_KEY
                 , ?PARAM_SIGNATURE
@@ -219,35 +217,7 @@ initiate_args_of_params(ResourceURI, ParamPairsGiven) ->
                 , ?PARAM_NONCE
                 , ?PARAM_CALLBACK
                 ],
-            ParamsOptional    = [?PARAM_VERSION],
-            ParamsSupported   = ParamsRequired ++ ParamsOptional,
-            ParamsGiven       = [K || {K, _V} <- ParamPairsGiven],
-            ParamsGivenUnique = lists:usort(ParamsGiven),
-            ParamsDups        = lists:usort(ParamsGiven -- ParamsGivenUnique),
-            ParamsMissing     = ParamsRequired -- ParamsGivenUnique,
-            ParamsUnsupported = ParamsGivenUnique -- ParamsSupported,
-            case {ParamsDups, ParamsMissing, ParamsUnsupported}
-            of  {[], [], []} ->
-                    {ok, ok}
-            ;   {_, _, _} ->
-                    ErrorDups =
-                        case ParamsDups
-                        of  []    -> []
-                        ;   [_|_] -> [{parameters_duplicated, ParamsDups}]
-                        end,
-                    ErrorMissing =
-                        case ParamsMissing
-                        of  []    -> []
-                        ;   [_|_] -> [{parameters_missing, ParamsMissing}]
-                        end,
-                    ErrorUnsupported =
-                        case ParamsUnsupported
-                        of  []    -> []
-                        ;   [_|_] -> [{parameters_unsupported, ParamsUnsupported}]
-                        end,
-                    Errors = ErrorDups ++ ErrorMissing ++ ErrorUnsupported,
-                    {error, {bad_request, Errors}}
-            end
+            ?parameters:validate_presence(ParamPairsGiven, Required)
         end,
     ParseSigMethod  =
         fun (ok) ->
@@ -314,7 +284,6 @@ initiate_args_of_params(ResourceURI, ParamPairsGiven) ->
         , ConsArgs
         ],
     hope_result:pipe(Steps, ok).
-
 
 %% @doc Owner authorizes the client's temporary token and, in return, gets the
 %% uri of the client "ready" callback with the tmp token and a verifier query

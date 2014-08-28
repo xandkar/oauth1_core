@@ -5,6 +5,7 @@
 -define(config                    , oauth1_config).
 -define(credentials               , oauth1_credentials).
 -define(nonce                     , oauth1_nonce).
+-define(parameters                , oauth1_parameters).
 -define(random_string             , oauth1_random_string).
 -define(resource                  , oauth1_resource).
 -define(server                    , oauth1_server).
