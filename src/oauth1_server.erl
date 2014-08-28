@@ -21,6 +21,7 @@
     , token/1
 
     , initiate_args_of_params/2
+    ,    token_args_of_params/2
 
     , validate_resource_request/1
 
@@ -284,6 +285,85 @@ initiate_args_of_params(ResourceURI, ParamPairsGiven) ->
         , ConsArgs
         ],
     hope_result:pipe(Steps, ok).
+
+-spec token_args_of_params(ResourceURI, Parameters) ->
+    hope_result:t(Ok, Error)
+    when ResourceURI :: oauth1_uri:t()
+       , Parameters  :: [{binary(), binary()}]
+       , Ok          :: args_token()
+       , Error       :: {bad_request, [error_bad_request()]}
+       .
+token_args_of_params(ResourceURI, ParamPairsGiven) ->
+    CheckParamPresence =
+        fun (ok) ->
+            Required =
+                [ ?PARAM_REALM
+                , ?PARAM_CONSUMER_KEY
+                , ?PARAM_TOKEN
+                , ?PARAM_SIGNATURE_METHOD
+                , ?PARAM_TIMESTAMP
+                , ?PARAM_NONCE
+                , ?PARAM_VERIFIER
+                , ?PARAM_SIGNATURE
+                ],
+            ?parameters:validate_presence(ParamPairsGiven, Required)
+        end,
+    ParseSigMethod  =
+        fun (ok) ->
+            P = ParamPairsGiven,
+            {some, SigMethBin} = hope_kv_list:get(P, ?PARAM_SIGNATURE_METHOD),
+            case ?signature:method_of_bin(SigMethBin)
+            of  {ok, SigMethod} ->
+                    {ok, SigMethod}
+            ;   {error, {signature_method_unsupported, SigMethBin}=Error} ->
+                    {error, {bad_request, [Error]}}
+            end
+        end,
+    ParseTimestamp =
+        fun (SigMethod) ->
+            P = ParamPairsGiven,
+            {some, TimestampBin} = hope_kv_list:get(P, ?PARAM_TIMESTAMP),
+            BinToInt = hope_result:lift_exn(fun erlang:binary_to_integer/1),
+            case BinToInt(TimestampBin)
+            of  {ok, Timestamp} ->
+                    {ok, {SigMethod, Timestamp}}
+            ;   {error, {error, badarg}} ->
+                    Error = {timestamp_invalid, TimestampBin},
+                    {error, {bad_request, [Error]}}
+            end
+        end,
+    ConsArgs =
+        fun ({SigMethod, Timestamp}) ->
+            P = ParamPairsGiven,
+            {some, Realm}        = hope_kv_list:get(P, ?PARAM_REALM),
+            {some, ConsumerKey}  = hope_kv_list:get(P, ?PARAM_CONSUMER_KEY),
+            {some, SigGiven}     = hope_kv_list:get(P, ?PARAM_SIGNATURE),
+            {some, Nonce}        = hope_kv_list:get(P, ?PARAM_NONCE),
+            {some, TmpTokenBin}  = hope_kv_list:get(P, ?PARAM_TOKEN),
+            {some, Verifier}     = hope_kv_list:get(P, ?PARAM_VERIFIER),
+            VersionOpt           = hope_kv_list:get(P, ?PARAM_VERSION),
+            InitiateArgs = #oauth1_server_args_token
+                { resource            = ?resource:cons(Realm, ResourceURI)
+                , consumer_key        = {client, ConsumerKey}
+                , signature           = SigGiven
+                , signature_method    = SigMethod
+                , timestamp           = Timestamp
+                , nonce               = Nonce
+                , temp_token          = {tmp, TmpTokenBin}
+                , verifier            = Verifier
+                , host                = ?uri:get_host(ResourceURI)
+                , version             = VersionOpt
+                },
+            {ok, InitiateArgs}
+        end,
+    Steps =
+        [ CheckParamPresence
+        , ParseSigMethod
+        , ParseTimestamp
+        , ConsArgs
+        ],
+    hope_result:pipe(Steps, ok).
+
 
 %% @doc Owner authorizes the client's temporary token and, in return, gets the
 %% uri of the client "ready" callback with the tmp token and a verifier query

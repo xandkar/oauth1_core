@@ -28,6 +28,8 @@
     , t_initiate_args_of_params__error__badreq__callback_uri_invalid/1
     , t_initiate_args_of_params__error__badreq__timestamp_invalid/1
     , t_initiate_args_of_params__ok/1
+
+    , t_token_args_of_params__ok/1
     ]).
 
 
@@ -65,6 +67,8 @@ groups() ->
         , t_initiate_args_of_params__error__badreq__callback_uri_invalid
         , t_initiate_args_of_params__error__badreq__timestamp_invalid
         , t_initiate_args_of_params__ok
+
+        , t_token_args_of_params__ok
         ],
     Properties = [],
     [ {?GROUP_OAUTH1_SERVER, Properties, Tests}
@@ -323,3 +327,42 @@ t_initiate_args_of_params__error__badreq__timestamp_invalid(_Cfg) ->
     ct:log("Result: ~p", [Result]),
     Error = {timestamp_invalid, Timestamp},
     {error, {bad_request, [Error]}} = Result.
+
+t_token_args_of_params__ok(_Cfg) ->
+    {ok, ResourceURI} = oauth1_uri:of_bin(<<"http://foo/bar">>),
+    Realm             = <<>>,
+    ConsumerKey       = <<>>,
+    Signature         = <<>>,
+    SignatureMethod   = <<"HMAC-SHA1">>,
+    TimestampBin      = <<"123">>,
+    TimestampInt      =    123,
+    Nonce             = <<>>,
+    TmpTokenIDBin     = <<>>,
+    Verifier          = <<>>,
+    Params =
+        [ {?PARAM_REALM            , Realm}
+        , {?PARAM_CONSUMER_KEY     , ConsumerKey}
+        , {?PARAM_SIGNATURE        , Signature}
+        , {?PARAM_SIGNATURE_METHOD , SignatureMethod}
+        , {?PARAM_TIMESTAMP        , TimestampBin}
+        , {?PARAM_NONCE            , Nonce}
+        , {?PARAM_TOKEN            , TmpTokenIDBin}
+        , {?PARAM_VERIFIER         , Verifier}
+        ],
+    Result = oauth1_server:token_args_of_params(ResourceURI, Params),
+    ct:log("Result: ~p", [Result]),
+    {ok, #oauth1_server_args_token{}=Args} = Result,
+    Resource = oauth1_resource:cons(Realm, ResourceURI),
+    Host = oauth1_uri:get_host(ResourceURI),
+    #oauth1_server_args_token
+    { resource            = Resource
+    , consumer_key        = {client, ConsumerKey}
+    , signature           = Signature
+    , signature_method    = 'HMAC_SHA1'
+    , timestamp           = TimestampInt
+    , nonce               = Nonce
+    , temp_token          = {tmp, TmpTokenIDBin}
+    , verifier            = Verifier
+    , host                = Host
+    , version             = none
+    } = Args.
