@@ -57,6 +57,8 @@ cons(#oauth1_signature_args_cons
     , timestamp            = Timestamp
     , nonce                = Nonce
 
+    % TODO: Combine into a single, client_credentials, field:
+    %       consumer_key, client_shared_secret.
     , client_shared_secret = ClientSharedSecret
 
     , token                = TokenOpt
