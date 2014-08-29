@@ -1,4 +1,5 @@
 -define(PARAM_CALLBACK         , <<"oauth_callback">>).
+-define(PARAM_CALLBACK_CONFIRMED , <<"oauth_callback_confirmed">>).
 -define(PARAM_CONSUMER_KEY     , <<"oauth_consumer_key">>).
 -define(PARAM_NONCE            , <<"oauth_nonce">>).
 -define(PARAM_REALM            , <<"realm">>).
