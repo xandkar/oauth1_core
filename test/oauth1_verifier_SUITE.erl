@@ -12,6 +12,7 @@
 -export(
     [ t_basic_uniqueness_amd_storage/1
     , t_low_entropy/1
+    , t_cons/1
     ]).
 
 
@@ -37,6 +38,7 @@ groups() ->
     Tests =
         [ t_basic_uniqueness_amd_storage
         , t_low_entropy
+        , t_cons
         ],
     Properties = [],
     [ {?GROUP, Properties, Tests}
@@ -71,3 +73,12 @@ t_low_entropy(_Cfg) ->
     ok = meck:expect(oauth1_random_string, generate, FakeGenerate),
     {error, low_entropy} = oauth1_verifier:generate({tmp, <<"faketmptokid">>}),
     ok = meck:unload(oauth1_random_string).
+
+t_cons(_Cfg) ->
+    TmpTokenID      = {tmp, <<"fake-tmp-token-id">>},
+    {ok, Verifier1} = oauth1_verifier:generate(TmpTokenID),
+    VerifierValue   = oauth1_verifier:get_value(Verifier1),
+    Verifier2       = oauth1_verifier:cons(TmpTokenID, VerifierValue),
+    ct:log("Verifier generated: ~p", [Verifier1]),
+    ct:log("Verifier constructed: ~p", [Verifier2]),
+    Verifier1 = Verifier2.

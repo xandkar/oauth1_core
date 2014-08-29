@@ -10,6 +10,9 @@
     % Construct
     [ generate/1
 
+    % Construct (for tests)
+    , cons/2
+
     % Access
     , get_value/1
 
@@ -44,6 +47,14 @@ generate(TempToken) ->
                 },
             {ok, T}
     end.
+
+-spec cons(?credentials:id(tmp), binary()) ->
+    t().
+cons({tmp, <<_/binary>>}=TempTokenID, <<VerifierValue/binary>>) ->
+    #t
+    { temp_token = TempTokenID
+    , verifier   = VerifierValue
+    }.
 
 -spec get_value(t()) ->
     binary().
