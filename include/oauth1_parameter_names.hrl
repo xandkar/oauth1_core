@@ -6,5 +6,6 @@
 -define(PARAM_SIGNATURE_METHOD , <<"oauth_signature_method">>).
 -define(PARAM_TIMESTAMP        , <<"oauth_timestamp">>).
 -define(PARAM_TOKEN            , <<"oauth_token">>).
+-define(PARAM_TOKEN_SECRET     , <<"oauth_token_secret">>).
 -define(PARAM_VERIFIER         , <<"oauth_verifier">>).
 -define(PARAM_VERSION          , <<"oauth_version">>).
