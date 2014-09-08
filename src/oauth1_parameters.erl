@@ -61,13 +61,13 @@ to_http_header_authorization([{_K1, _V1}=Pair1 | T]) ->
     hope_kv_list:fold(T, Append, Init).
 
 -spec validate_presence(t(), [binary()]) ->
-    hope_result:t(t(), [presence_error()]).
+    hope_result:t(t(), {bad_request, [presence_error()]}).
 validate_presence(T, KeysRequired) ->
     KeysOptional = [?PARAM_VERSION],
     validate_presence(T, KeysRequired, KeysOptional).
 
 -spec validate_presence(t(), [binary()], [binary()]) ->
-    hope_result:t(t(), [presence_error()]).
+    hope_result:t(ok, {bad_request, [presence_error()]}).
 validate_presence(T, KeysRequired, KeysOptional) ->
     KeysSupported   = KeysRequired ++ KeysOptional,
     KeysGiven       = [K || {K, _V} <- T],
