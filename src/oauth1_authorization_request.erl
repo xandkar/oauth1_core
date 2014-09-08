@@ -88,7 +88,7 @@ store(#t
     ?storage:store(Bucket, Key, Value).
 
 -spec fetch(token()) ->
-    hope_result:t(t(), ?storage:error()).
+    hope_result:t(t(), ?storage:error() | {data_format_invalid, binary()}).
 fetch({tmp, <<TokenID/binary>>}=Token) ->
     Bucket = ?STORAGE_BUCKET,
     Key    = TokenID,
