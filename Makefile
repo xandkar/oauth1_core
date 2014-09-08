@@ -17,7 +17,9 @@ ci: \
 	deps \
 	compile_all \
 	remove_cover_spec_from_deps \
-	test
+	test \
+	select_plt \
+	dialyze
 
 # A kludge to avoid the conflict of cover.spec files with Travis' rebar
 remove_cover_spec_from_deps:
