@@ -68,5 +68,8 @@ dialyze: test
 			| grep -v oauth1_http_header_authorization_lexer.beam \
 			| grep -v oauth1_http_header_authorization_parser.beam \
 		) \
-		deps/*/ebin/*.beam \
+		$(shell \
+			ls -1 deps/*/ebin/*.beam \
+			| grep -v deps/meck \
+		) \
 		test/*.beam
