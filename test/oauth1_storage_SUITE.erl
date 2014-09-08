@@ -58,10 +58,10 @@ t_crud(_Cfg) ->
     Key     = <<"bar">>,
     Value1  = <<"baz">>,
     Value2  = <<"qux">>,
-    {error, not_found} = oauth1_storage:get(Bucket, Key),
-    {ok, ok}           = oauth1_storage:put(Bucket, Key, Value1),
-    {ok, Value1}       = oauth1_storage:get(Bucket, Key),
-    {ok, ok}           = oauth1_storage:put(Bucket, Key, Value2),
-    {ok, Value2}       = oauth1_storage:get(Bucket, Key),
+    {error, not_found} = oauth1_storage:fetch(Bucket, Key),
+    {ok, ok}           = oauth1_storage:store(Bucket, Key, Value1),
+    {ok, Value1}       = oauth1_storage:fetch(Bucket, Key),
+    {ok, ok}           = oauth1_storage:store(Bucket, Key, Value2),
+    {ok, Value2}       = oauth1_storage:fetch(Bucket, Key),
     {ok, ok}           = oauth1_storage:delete(Bucket, Key),
-    {error, not_found} = oauth1_storage:get(Bucket, Key).
+    {error, not_found} = oauth1_storage:fetch(Bucket, Key).

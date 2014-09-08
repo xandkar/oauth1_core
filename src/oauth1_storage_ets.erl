@@ -5,8 +5,8 @@
 -include_lib("oauth1_module_abbreviations.hrl").
 
 -export(
-    [ put/3
-    , get/2
+    [ store/3
+    , fetch/2
     , delete/2
     , start/0
     , stop/0
@@ -32,12 +32,12 @@ stop() ->
     true = ets:delete(?TABLE),
     {ok, ok}.
 
-put(Bucket, Key0, Value) ->
+store(Bucket, Key0, Value) ->
     Key = join_bucket_and_key(Bucket, Key0),
     true = ets:insert(?TABLE, {Key, Value}),
     {ok, ok}.
 
-get(Bucket, Key0) ->
+fetch(Bucket, Key0) ->
     Key = join_bucket_and_key(Bucket, Key0),
     case ets:lookup(?TABLE, Key)
     of  []             -> {error, not_found}

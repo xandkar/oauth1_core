@@ -123,7 +123,7 @@ t_fetch_expired(Cfg) ->
         , {<<"secret">> , <<"thecityofzinj">>}
         , {<<"expiry">> , Expiry}
         ]),
-    ok = oauth1_mock_storage:set_next_result_get({ok, DataBadType}),
+    ok = oauth1_mock_storage:set_next_result_fetch({ok, DataBadType}),
     FetchResult = oauth1_credentials:fetch(ID),
     case {Type, FetchResult}
     of  {client , {ok, _}} -> ok
@@ -137,12 +137,12 @@ t_storage_error_corrupt(_Cfg) ->
     ClientID = {client, <<"fake-client-id">>},
 
     DataGarbage = <<"garbage">>,
-    ok = oauth1_mock_storage:set_next_result_get({ok, DataGarbage}),
+    ok = oauth1_mock_storage:set_next_result_fetch({ok, DataGarbage}),
     FetchResult1 = oauth1_credentials:fetch(ClientID),
     {error, {internal, {data_format_invalid, DataGarbage}}} = FetchResult1,
 
     DataIncomplete = jsx:encode([{<<"secret">>, <<"whoshotjfk">>}]),
-    ok = oauth1_mock_storage:set_next_result_get({ok, DataIncomplete}),
+    ok = oauth1_mock_storage:set_next_result_fetch({ok, DataIncomplete}),
     FetchResult2 = oauth1_credentials:fetch(ClientID),
     {error, {internal, {field_missing, _}}} = FetchResult2,
 
@@ -155,7 +155,7 @@ t_storage_error_corrupt(_Cfg) ->
         , {<<"secret">> , <<"thecityofzinj">>}
         , {<<"expiry">> , <<"123">>}
         ]),
-    ok = oauth1_mock_storage:set_next_result_get({ok, DataBadType}),
+    ok = oauth1_mock_storage:set_next_result_fetch({ok, DataBadType}),
     FetchResult3 = oauth1_credentials:fetch(ClientID),
     {error, {internal, {credentials_type_unknown, BadType}}} = FetchResult3,
 
@@ -164,6 +164,6 @@ t_storage_error_corrupt(_Cfg) ->
 t_storage_error_io(Cfg) ->
     {some, Type} = hope_kv_list:get(Cfg, ?TYPE),
     ok = oauth1_mock_storage:start(),
-    ok = oauth1_mock_storage:set_next_result_put({error, {io_error, foobar}}),
+    ok = oauth1_mock_storage:set_next_result_store({error, {io_error, foobar}}),
     {error, {io_error, foobar}} = oauth1_credentials:generate_and_store(Type),
     ok = oauth1_mock_storage:stop().

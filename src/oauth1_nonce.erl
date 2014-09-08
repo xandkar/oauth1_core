@@ -34,13 +34,13 @@ store(<<T/binary>>) ->
     Bucket = ?STORAGE_BUCKET,
     Key    = T,
     Value  = <<>>,
-    ?storage:put(Bucket, Key, Value).
+    ?storage:store(Bucket, Key, Value).
 
 -spec fetch(t()) ->
     hope_result:t(ok, ?storage:error()).
 fetch(<<T/binary>>) ->
     Bucket = ?STORAGE_BUCKET,
-    case ?storage:get(Bucket, T)
+    case ?storage:fetch(Bucket, T)
     of  {error, _}=Error -> Error
     ;   {ok, <<>>}       -> {ok, ok}
     end.

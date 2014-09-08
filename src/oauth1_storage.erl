@@ -7,8 +7,8 @@
     ]).
 
 -export(
-    [ put/3
-    , get/2
+    [ store/3
+    , fetch/2
     , delete/2
     , start/0
     , stop/0
@@ -26,10 +26,10 @@
 -callback stop() ->
     hope_result:t(ok, term()).
 
--callback put(binary(), binary(), binary()) ->
+-callback store(binary(), binary(), binary()) ->
     hope_result:t(ok, error()).
 
--callback get(binary(), binary()) ->
+-callback fetch(binary(), binary()) ->
     hope_result:t(binary(), error()).
 
 -callback delete(binary(), binary()) ->
@@ -49,17 +49,17 @@ stop() ->
     StorageModule:stop().
 
 
--spec put(binary(), binary(), binary()) ->
+-spec store(binary(), binary(), binary()) ->
     hope_result:t(ok, error()).
-put(Bucket, Key, Value) ->
+store(Bucket, Key, Value) ->
     StorageModule = lookup_storage_module(),
-    StorageModule:put(Bucket, Key, Value).
+    StorageModule:store(Bucket, Key, Value).
 
--spec get(binary(), binary()) ->
+-spec fetch(binary(), binary()) ->
     hope_result:t(binary(), error()).
-get(Bucket, Key) ->
+fetch(Bucket, Key) ->
     StorageModule = lookup_storage_module(),
-    StorageModule:get(Bucket, Key).
+    StorageModule:fetch(Bucket, Key).
 
 -spec delete(binary(), binary()) ->
     hope_result:t(binary(), error()).

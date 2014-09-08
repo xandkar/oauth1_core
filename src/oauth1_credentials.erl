@@ -160,14 +160,14 @@ store(#t{id={Type, <<ID/binary>>}}=T) ->
     Bucket = type_to_bucket(Type),
     Key    = ID,
     Value  = to_bin(T),
-    ?storage:put(Bucket, Key, Value).
+    ?storage:store(Bucket, Key, Value).
 
 -spec fetch(id(credentials_type())) ->
     hope_result:t(t(credentials_type()), ?storage:error() | retrival_error()).
 fetch({Type, <<ID/binary>>}) ->
     Bucket = type_to_bucket(Type),
     Key    = ID,
-    case ?storage:get(Bucket, Key)
+    case ?storage:fetch(Bucket, Key)
     of  {error, _}=Error ->
             Error
     ;   {ok, Value} ->

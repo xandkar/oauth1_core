@@ -102,10 +102,10 @@ t_storage_corrupt(Cfg) ->
     ok = oauth1_mock_storage:start(),
     {some, AuthReq}    = hope_kv_list:get(Cfg, ?LIT_AUTH_REQ),
     {some, TmpTokenID} = hope_kv_list:get(Cfg, ?LIT_TMP_TOKEN_ID),
-    ok = oauth1_mock_storage:set_next_result_put({ok, ok}),
+    ok = oauth1_mock_storage:set_next_result_store({ok, ok}),
     {ok, ok} = oauth1_authorization_request:store(AuthReq),
     MockData = <<"garbage">>,
-    ok = oauth1_mock_storage:set_next_result_get({ok, MockData}),
+    ok = oauth1_mock_storage:set_next_result_fetch({ok, MockData}),
     FetchResult = oauth1_authorization_request:fetch(TmpTokenID),
     {error, {data_format_invalid, MockData}} = FetchResult,
     ok = oauth1_mock_storage:stop().

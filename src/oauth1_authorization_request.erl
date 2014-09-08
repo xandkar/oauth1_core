@@ -85,14 +85,14 @@ store(#t
     Bucket = ?STORAGE_BUCKET,
     Key    = TokenID,
     Value  = jsx:encode(Props),
-    ?storage:put(Bucket, Key, Value).
+    ?storage:store(Bucket, Key, Value).
 
 -spec fetch(token()) ->
     hope_result:t(t(), ?storage:error()).
 fetch({tmp, <<TokenID/binary>>}=Token) ->
     Bucket = ?STORAGE_BUCKET,
     Key    = TokenID,
-    case ?storage:get(Bucket, Key)
+    case ?storage:fetch(Bucket, Key)
     of  {error, _}=Error ->
             Error
     ;   {ok, Data} ->

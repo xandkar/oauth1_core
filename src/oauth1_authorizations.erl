@@ -76,7 +76,7 @@ store(#t
     Bucket = ?STORAGE_BUCKET,
     Key    = Client,
     Value  = jsx:encode(Realms),
-    ?storage:put(Bucket, Key, Value).
+    ?storage:store(Bucket, Key, Value).
 
 -spec fetch(client()) ->
     hope_result:t(t(), Error)
@@ -86,7 +86,7 @@ store(#t
 fetch({client, <<ClientID/binary>>}=Client) ->
     Bucket = ?STORAGE_BUCKET,
     Key    = ClientID,
-    case ?storage:get(Bucket, Key)
+    case ?storage:fetch(Bucket, Key)
     of  {error, _}=Error ->
             Error
     ;   {ok, RealmsJson} ->

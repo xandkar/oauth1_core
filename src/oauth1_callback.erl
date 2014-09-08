@@ -58,13 +58,13 @@ store(#t{token = {tmp, <<Token/binary>>}, uri=Uri}) ->
     Bucket = ?STORAGE_BUCKET,
     Key    = Token,
     Value  = ?uri:to_bin(Uri),
-    ?storage:put(Bucket, Key, Value).
+    ?storage:store(Bucket, Key, Value).
 
 -spec fetch(?credentials:id(tmp)) ->
     hope_result:t(t(), ?storage:error()).
 fetch({tmp, <<Token/binary>>}) ->
     Bucket = ?STORAGE_BUCKET,
-    case ?storage:get(Bucket, Token)
+    case ?storage:fetch(Bucket, Token)
     of  {error, _}=Error ->
             Error
     ;   {ok, UriBin} ->

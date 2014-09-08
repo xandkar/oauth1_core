@@ -4,31 +4,31 @@
 
 %% Storage API
 -export(
-    [ put/3
-    , get/2
+    [ store/3
+    , fetch/2
     ]).
 
 %% Mocking API
 -export(
     [ start/0
     , stop/0
-    , set_next_result_put/1
-    , set_next_result_get/1
+    , set_next_result_store/1
+    , set_next_result_fetch/1
     ]).
 
 
 -define(APP                     , oauth1_core).
 -define(KEY_REAL_STORAGE_MODULE , storage_module).
--define(KEY_NEXT_RESULT_GET     , next_result_get).
--define(KEY_NEXT_RESULT_PUT     , next_result_put).
+-define(KEY_NEXT_RESULT_FETCH   , next_result_fetch).
+-define(KEY_NEXT_RESULT_STORE   , next_result_store).
 -define(TABLE_NAME              , oauth1_mock_storage_internal_data).
 
 
-put(_Bucket, _Key, _Value) ->
-    storage_get(?KEY_NEXT_RESULT_PUT).
+store(_Bucket, _Key, _Value) ->
+    storage_get(?KEY_NEXT_RESULT_STORE).
 
-get(_Bucket, _Key) ->
-    storage_get(?KEY_NEXT_RESULT_GET).
+fetch(_Bucket, _Key) ->
+    storage_get(?KEY_NEXT_RESULT_FETCH).
 
 
 -spec start() ->
@@ -45,15 +45,15 @@ stop() ->
     Module = storage_get(?KEY_REAL_STORAGE_MODULE),
     ok = application:set_env(?APP, ?KEY_REAL_STORAGE_MODULE, Module).
 
--spec set_next_result_put(hope_result:t(ok, oauth1_storage:error())) ->
+-spec set_next_result_store(hope_result:t(ok, oauth1_storage:error())) ->
     ok.
-set_next_result_put(Result) ->
-    ok = storage_set(?KEY_NEXT_RESULT_PUT, Result).
+set_next_result_store(Result) ->
+    ok = storage_set(?KEY_NEXT_RESULT_STORE, Result).
 
--spec set_next_result_get(hope_result:t(binary(), oauth1_storage:error())) ->
+-spec set_next_result_fetch(hope_result:t(binary(), oauth1_storage:error())) ->
     ok.
-set_next_result_get(Result) ->
-    ok = storage_set(?KEY_NEXT_RESULT_GET, Result).
+set_next_result_fetch(Result) ->
+    ok = storage_set(?KEY_NEXT_RESULT_FETCH, Result).
 
 
 storage_create() ->

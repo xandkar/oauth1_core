@@ -72,14 +72,14 @@ store(#t
     Bucket = ?STORAGE_BUCKET,
     Key    = TokenID,
     Value  = Verifier,
-    ?storage:put(Bucket, Key, Value).
+    ?storage:store(Bucket, Key, Value).
 
 -spec fetch(TempToken :: ?credentials:id(tmp)) ->
     hope_result:t(t(), ?storage:error()).
 fetch({tmp, <<TokenID/binary>>}=TempToken) ->
     Bucket = ?STORAGE_BUCKET,
     Key    = TokenID,
-    case ?storage:get(Bucket, Key)
+    case ?storage:fetch(Bucket, Key)
     of  {error, _}=Error ->
             Error
     ;   {ok, Verifier} ->
