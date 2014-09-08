@@ -52,9 +52,15 @@
 %% t() is really meant to be opaque, but alas - Dialyzer does not (yet) support
 %% polymorphic opaque types :(
 -type t(CredentialsType) ::
-    #t
-    { id     ::     id(CredentialsType)
-    , secret :: secret(CredentialsType)
+    % We define the structure of t/1 using it's runtime representation
+    % so that Dialyzer can track which case of credentials_type/0 it was
+    % initialized with.
+    { t
+    % !!! IMPORTANT !!!
+    % The bellow fields MUST be in the same order as in above record definition
+    ,     id(CredentialsType)
+    , secret(CredentialsType)
+    , hope_option:t(?timestamp:t())
     }.
 
 -type parsing_error() ::
