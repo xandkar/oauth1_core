@@ -62,7 +62,7 @@ fetch(Bucket, Key) ->
     StorageModule:fetch(Bucket, Key).
 
 -spec delete(binary(), binary()) ->
-    hope_result:t(binary(), error()).
+    hope_result:t(ok, error()).
 delete(Bucket, Key) ->
     StorageModule = lookup_storage_module(),
     StorageModule:delete(Bucket, Key).
