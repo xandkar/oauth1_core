@@ -19,7 +19,7 @@
     [{binary(), binary()}].
 
 -type presence_error() ::
-      {parameters_duplicated , [binary()]}
+      {parameters_missing    , [binary()]}
     | {parameters_duplicated , [binary()]}
     | {parameters_unsupported, [binary()]}
     .
