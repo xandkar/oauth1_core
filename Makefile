@@ -61,15 +61,16 @@ clean_all:
 	@rebar clean skip_deps=false
 	@rm -rf ebin/
 
-dialyze: test
+dialyze:
 	@dialyzer \
 		$(shell \
-			ls -1 ebin/*.beam \
-			| grep -v oauth1_http_header_authorization_lexer.beam \
-			| grep -v oauth1_http_header_authorization_parser.beam \
+			ls -1 src/*.erl \
+			| grep -v oauth1_http_header_authorization_lexer.erl \
+			| grep -v oauth1_http_header_authorization_parser.erl \
 		) \
 		$(shell \
-			ls -1 deps/*/ebin/*.beam \
+			ls -1 deps/*/src/*.erl \
 			| grep -v deps/meck \
+			| grep -v deps/proper \
 		) \
-		test/*.beam
+		test/*.erl
