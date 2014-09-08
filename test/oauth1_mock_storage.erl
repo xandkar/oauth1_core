@@ -37,19 +37,17 @@ delete(_Bucket, _Key) ->
     storage_get(?KEY_NEXT_RESULT_DELETE).
 
 
--spec start() ->
-    ok.
 start() ->
     ok = storage_create(),
     {ok, Module} = application:get_env(?APP, ?KEY_REAL_STORAGE_MODULE),
     ok = storage_set(?KEY_REAL_STORAGE_MODULE, Module),
-    ok = application:set_env(?APP, ?KEY_REAL_STORAGE_MODULE, ?MODULE).
+    ok = application:set_env(?APP, ?KEY_REAL_STORAGE_MODULE, ?MODULE),
+    {ok, ok}.
 
--spec stop() ->
-    ok.
 stop() ->
     Module = storage_get(?KEY_REAL_STORAGE_MODULE),
-    ok = application:set_env(?APP, ?KEY_REAL_STORAGE_MODULE, Module).
+    ok = application:set_env(?APP, ?KEY_REAL_STORAGE_MODULE, Module),
+    {ok, ok}.
 
 -spec set_next_result_store(hope_result:t(ok, oauth1_storage:error())) ->
     ok.

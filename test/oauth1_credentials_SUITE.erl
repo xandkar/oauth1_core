@@ -105,7 +105,7 @@ t_generate_error(Cfg) ->
     ok = meck:unload(oauth1_random_string).
 
 t_fetch_expired(Cfg) ->
-    ok = oauth1_mock_storage:start(),
+    {ok, ok} = oauth1_mock_storage:start(),
     {some, Type} = hope_kv_list:get(Cfg, ?TYPE),
     TypeBin = atom_to_binary(Type, latin1),
     IDBin = <<"fake-id">>,
@@ -130,10 +130,10 @@ t_fetch_expired(Cfg) ->
     ;   {tmp    , {error, token_expired}} -> ok
     ;   {token  , {error, token_expired}} -> ok
     end,
-    ok = oauth1_mock_storage:stop().
+    {ok, ok} = oauth1_mock_storage:stop().
 
 t_storage_error_corrupt(_Cfg) ->
-    ok = oauth1_mock_storage:start(),
+    {ok, ok} = oauth1_mock_storage:start(),
     ClientID = {client, <<"fake-client-id">>},
 
     DataGarbage = <<"garbage">>,
@@ -159,11 +159,11 @@ t_storage_error_corrupt(_Cfg) ->
     FetchResult3 = oauth1_credentials:fetch(ClientID),
     {error, {internal, {credentials_type_unknown, BadType}}} = FetchResult3,
 
-    ok = oauth1_mock_storage:stop().
+    {ok, ok} = oauth1_mock_storage:stop().
 
 t_storage_error_io(Cfg) ->
     {some, Type} = hope_kv_list:get(Cfg, ?TYPE),
-    ok = oauth1_mock_storage:start(),
+    {ok, ok} = oauth1_mock_storage:start(),
     ok = oauth1_mock_storage:set_next_result_store({error, {io_error, foobar}}),
     {error, {io_error, foobar}} = oauth1_credentials:generate_and_store(Type),
-    ok = oauth1_mock_storage:stop().
+    {ok, ok} = oauth1_mock_storage:stop().

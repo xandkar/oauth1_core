@@ -99,7 +99,7 @@ t_storage(Cfg) ->
     {error, not_found} = oauth1_authorization_request:fetch({tmp, <<"bogus">>}).
 
 t_storage_corrupt(Cfg) ->
-    ok = oauth1_mock_storage:start(),
+    {ok, ok} = oauth1_mock_storage:start(),
     {some, AuthReq}    = hope_kv_list:get(Cfg, ?LIT_AUTH_REQ),
     {some, TmpTokenID} = hope_kv_list:get(Cfg, ?LIT_TMP_TOKEN_ID),
     ok = oauth1_mock_storage:set_next_result_store({ok, ok}),
@@ -108,4 +108,4 @@ t_storage_corrupt(Cfg) ->
     ok = oauth1_mock_storage:set_next_result_fetch({ok, MockData}),
     FetchResult = oauth1_authorization_request:fetch(TmpTokenID),
     {error, {data_format_invalid, MockData}} = FetchResult,
-    ok = oauth1_mock_storage:stop().
+    {ok, ok} = oauth1_mock_storage:stop().

@@ -112,11 +112,11 @@ t_register_new_client__error_low_entropy(_Cfg) ->
     ok = meck:unload(MockModule).
 
 t_register_new_client__error_io(_Cfg) ->
-    ok = oauth1_mock_storage:start(),
+    {ok, ok} = oauth1_mock_storage:start(),
     IOError = {error, {io_error, foobar}},
     ok = oauth1_mock_storage:set_next_result_store(IOError),
     IOError = oauth1_server:register_new_client(),
-    ok = oauth1_mock_storage:stop().
+    {ok, ok} = oauth1_mock_storage:stop().
 
 
 %% ----------------------------------------------------------------------------
