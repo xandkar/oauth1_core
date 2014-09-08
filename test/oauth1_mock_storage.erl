@@ -6,6 +6,7 @@
 -export(
     [ store/3
     , fetch/2
+    , delete/2
     ]).
 
 %% Mocking API
@@ -14,6 +15,7 @@
     , stop/0
     , set_next_result_store/1
     , set_next_result_fetch/1
+    , set_next_result_delete/1
     ]).
 
 
@@ -21,6 +23,7 @@
 -define(KEY_REAL_STORAGE_MODULE , storage_module).
 -define(KEY_NEXT_RESULT_FETCH   , next_result_fetch).
 -define(KEY_NEXT_RESULT_STORE   , next_result_store).
+-define(KEY_NEXT_RESULT_DELETE  , next_result_delete).
 -define(TABLE_NAME              , oauth1_mock_storage_internal_data).
 
 
@@ -29,6 +32,9 @@ store(_Bucket, _Key, _Value) ->
 
 fetch(_Bucket, _Key) ->
     storage_get(?KEY_NEXT_RESULT_FETCH).
+
+delete(_Bucket, _Key) ->
+    storage_get(?KEY_NEXT_RESULT_DELETE).
 
 
 -spec start() ->
@@ -54,6 +60,11 @@ set_next_result_store(Result) ->
     ok.
 set_next_result_fetch(Result) ->
     ok = storage_set(?KEY_NEXT_RESULT_FETCH, Result).
+
+-spec set_next_result_delete(hope_result:t(binary(), oauth1_storage:error())) ->
+    ok.
+set_next_result_delete(Result) ->
+    ok = storage_set(?KEY_NEXT_RESULT_DELETE, Result).
 
 
 storage_create() ->
