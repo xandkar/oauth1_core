@@ -113,8 +113,8 @@
 %% @end
 -spec register_new_client() ->
     hope_result:t({ID, Secret}, Error)
-    when ID     :: binary()
-       , Secret :: binary()
+    when ID     :: ?credentials:id(client)
+       , Secret :: ?credentials:secret(client)
        , Error  :: ?storage:error()
                  | ?random_string:error()
        .
