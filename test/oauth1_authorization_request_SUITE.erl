@@ -105,7 +105,7 @@ t_storage_corrupt(Cfg) ->
     ok = oauth1_mock_storage:set_next_result_store({ok, ok}),
     {ok, ok} = oauth1_authorization_request:store(AuthReq),
     MockData = <<"garbage">>,
-    ok = oauth1_mock_storage:set_next_result_fetch({ok, MockData}),
+    ok = oauth1_mock_storage:set_next_result_fetch({ok, [MockData]}),
     FetchResult = oauth1_authorization_request:fetch(TmpTokenID),
     {error, {data_format_invalid, MockData}} = FetchResult,
     {ok, ok} = oauth1_mock_storage:stop().

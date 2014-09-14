@@ -95,7 +95,7 @@ fetch({tmp, <<TokenID/binary>>}=Token) ->
     case ?storage:fetch(Bucket, Key)
     of  {error, _}=Error ->
             Error
-    ;   {ok, Data} ->
+    ;   {ok, [Data]} ->
             ErrorBadData = {error, {data_format_invalid, Data}},
             Decoder = hope_result:lift_exn(fun jsx:decode/1),
             case Decoder(Data)

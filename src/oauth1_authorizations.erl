@@ -89,7 +89,8 @@ fetch({client, <<ClientID/binary>>}=Client) ->
     case ?storage:fetch(Bucket, Key)
     of  {error, _}=Error ->
             Error
-    ;   {ok, RealmsJson} ->
+    % TODO: Handle multiple values!
+    ;   {ok, [RealmsJson]} ->
             ErrorBadData = {error, {data_format_invalid, RealmsJson}},
             Decoder = hope_result:lift_exn(fun jsx:decode/1),
             case Decoder(RealmsJson)

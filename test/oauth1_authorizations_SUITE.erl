@@ -109,7 +109,7 @@ t_storage(Cfg) ->
 t_storage_corrupt_gabage(_Cfg) ->
     {ok, ok} = oauth1_mock_storage:start(),
     MockData = <<"garbage">>,
-    ok = oauth1_mock_storage:set_next_result_fetch({ok, MockData}),
+    ok = oauth1_mock_storage:set_next_result_fetch({ok, [MockData]}),
     ClientID = {client, <<"fake-client-id">>},
     FetchResult = oauth1_authorizations:fetch(ClientID),
     {error, {data_format_invalid, MockData}} = FetchResult,
@@ -118,7 +118,7 @@ t_storage_corrupt_gabage(_Cfg) ->
 t_storage_corrupt_not_list(_Cfg) ->
     {ok, ok} = oauth1_mock_storage:start(),
     MockData = <<"null">>,
-    ok = oauth1_mock_storage:set_next_result_fetch({ok, MockData}),
+    ok = oauth1_mock_storage:set_next_result_fetch({ok, [MockData]}),
     ClientID = {client, <<"fake-client-id">>},
     FetchResult = oauth1_authorizations:fetch(ClientID),
     {error, {data_format_invalid, MockData}} = FetchResult,
@@ -127,7 +127,7 @@ t_storage_corrupt_not_list(_Cfg) ->
 t_storage_corrupt_not_all_bins_in_list(_Cfg) ->
     {ok, ok} = oauth1_mock_storage:start(),
     MockData = <<"[\"foo\", true, false, null, 12, {}]">>,
-    ok = oauth1_mock_storage:set_next_result_fetch({ok, MockData}),
+    ok = oauth1_mock_storage:set_next_result_fetch({ok, [MockData]}),
     ClientID = {client, <<"fake-client-id">>},
     FetchResult = oauth1_authorizations:fetch(ClientID),
     {error, {data_format_invalid, MockData}} = FetchResult,

@@ -41,7 +41,7 @@ fetch(Bucket, Key0) ->
     Key = join_bucket_and_key(Bucket, Key0),
     case ets:lookup(?TABLE, Key)
     of  []             -> {error, not_found}
-    ;   [{Key, Value}] -> {ok, Value}
+    ;   [{Key, Value}] -> {ok, [Value]}
     end.
 
 delete(Bucket, Key0) ->

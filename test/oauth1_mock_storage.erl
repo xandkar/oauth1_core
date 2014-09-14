@@ -54,7 +54,7 @@ stop() ->
 set_next_result_store(Result) ->
     ok = storage_set(?KEY_NEXT_RESULT_STORE, Result).
 
--spec set_next_result_fetch(hope_result:t(binary(), oauth1_storage:error())) ->
+-spec set_next_result_fetch(hope_result:t([binary()], oauth1_storage:error())) ->
     ok.
 set_next_result_fetch(Result) ->
     ok = storage_set(?KEY_NEXT_RESULT_FETCH, Result).

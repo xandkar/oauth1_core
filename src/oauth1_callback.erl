@@ -67,7 +67,7 @@ fetch({tmp, <<Token/binary>>}) ->
     case ?storage:fetch(Bucket, Token)
     of  {error, _}=Error ->
             Error
-    ;   {ok, UriBin} ->
+    ;   {ok, [UriBin]} ->
             % TODO: Handle parsing errors (return data_format_invalid)
             {ok, Uri} = ?uri:of_bin(UriBin),
             T = #t

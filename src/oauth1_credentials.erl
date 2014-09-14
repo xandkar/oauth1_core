@@ -176,7 +176,7 @@ fetch({Type, <<ID/binary>>}) ->
     case ?storage:fetch(Bucket, Key)
     of  {error, _}=Error ->
             Error
-    ;   {ok, Value} ->
+    ;   {ok, [Value]} ->
             case of_bin(Value)
             of  {error, {data_format_invalid, _}=ParsingError} ->
                     {error, {internal, ParsingError}}

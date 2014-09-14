@@ -20,6 +20,7 @@
     | {io_error, any()}
     .
 
+
 -callback start() ->
     hope_result:t(ok, term()).
 
@@ -30,7 +31,7 @@
     hope_result:t(ok, error()).
 
 -callback fetch(binary(), binary()) ->
-    hope_result:t(binary(), error()).
+    hope_result:t([binary()], error()).
 
 -callback delete(binary(), binary()) ->
     hope_result:t(ok, error()).
@@ -56,7 +57,7 @@ store(Bucket, Key, Value) ->
     StorageModule:store(Bucket, Key, Value).
 
 -spec fetch(binary(), binary()) ->
-    hope_result:t(binary(), error()).
+    hope_result:t([binary()], error()).
 fetch(Bucket, Key) ->
     StorageModule = lookup_storage_module(),
     StorageModule:fetch(Bucket, Key).

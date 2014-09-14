@@ -42,5 +42,5 @@ fetch(<<T/binary>>) ->
     Bucket = ?STORAGE_BUCKET,
     case ?storage:fetch(Bucket, T)
     of  {error, _}=Error -> Error
-    ;   {ok, <<>>}       -> {ok, ok}
+    ;   {ok, [<<>>]}     -> {ok, ok}
     end.

@@ -82,7 +82,7 @@ fetch({tmp, <<TokenID/binary>>}=TempToken) ->
     case ?storage:fetch(Bucket, Key)
     of  {error, _}=Error ->
             Error
-    ;   {ok, Verifier} ->
+    ;   {ok, [Verifier]} ->
             T = #t
                 { temp_token = TempToken
                 , verifier   = Verifier
