@@ -29,7 +29,7 @@
 
 -record(t,
     { client :: client()
-    , realms :: [realm()]
+    , realms :: crdt_set_2p:t(realm())
     }).
 
 -opaque t() ::
@@ -44,27 +44,27 @@
 cons({client, <<_/binary>>}=Client) ->
     #t
     { client = Client
-    , realms = ordsets:new()
+    , realms = crdt_set_2p:empty()
     }.
 
 -spec add(t(), realm()) ->
     t().
 add(#t{realms=Realms}=T, Realm) ->
     T#t
-    { realms = ordsets:add_element(Realm, Realms)
+    { realms = crdt_set_2p:add(Realms, Realm)
     }.
 
 -spec remove(t(), realm()) ->
     t().
 remove(#t{realms=Realms}=T, Realm) ->
     T#t
-    { realms = ordsets:del_element(Realm, Realms)
+    { realms = crdt_set_2p:remove(Realms, Realm)
     }.
 
 -spec is_authorized(t(), realm()) ->
     boolean().
 is_authorized(#t{realms=Realms}, Realm) ->
-    ordsets:is_element(Realm, Realms).
+    crdt_set_2p:is_member(Realms, Realm).
 
 -spec store(t()) ->
     hope_result:t(ok, ?storage:error()).
@@ -75,7 +75,7 @@ store(#t
 ) ->
     Bucket = ?STORAGE_BUCKET,
     Key    = Client,
-    Value  = jsx:encode(Realms),
+    Value  = crdt_set_2p:to_bin(Realms, fun realm_to_bin/1),
     ?storage:store(Bucket, Key, Value).
 
 -spec fetch(client()) ->
@@ -90,24 +90,22 @@ fetch({client, <<ClientID/binary>>}=Client) ->
     of  {error, _}=Error ->
             Error
     % TODO: Handle multiple values!
-    ;   {ok, [RealmsJson]} ->
-            ErrorBadData = {error, {data_format_invalid, RealmsJson}},
-            Decoder = hope_result:lift_exn(fun jsx:decode/1),
-            case Decoder(RealmsJson)
-            of  {ok, Realms} when is_list(Realms) ->
-                    case lists:all(fun erlang:is_binary/1, Realms)
-                    of  true ->
-                            T = #t
-                                { client = Client
-                                , realms = Realms
-                                },
-                            {ok, T}
-                    ;   false ->
-                            ErrorBadData
-                    end
-            ;   {ok, _} ->
-                    ErrorBadData
-            ;   {error, _} ->
-                    ErrorBadData
+    ;   {ok, [RealmsBin]} ->
+            case crdt_set_2p:of_bin(RealmsBin, fun realm_of_bin/1)
+            of  {error, _} ->
+                    {error, {data_format_invalid, RealmsBin}}
+            ;   {ok, Realms} ->
+                    T = #t
+                        { client = Client
+                        , realms = Realms
+                        },
+                    {ok, T}
             end
     end.
+
+
+realm_to_bin(<<Realm/binary>>) ->
+    Realm.
+
+realm_of_bin(<<Bin/binary>>) -> {ok, Bin};
+realm_of_bin(             X) -> {error, {not_a_binary, X}}.

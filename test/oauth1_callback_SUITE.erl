@@ -22,6 +22,7 @@
     , cowlib
     , bstr
     , hope
+    , crdt
     , oauth1_core
     ]).
 

@@ -9,6 +9,7 @@
       , hope
       , bstr
       , cowlib
+      , crdt
       ]}
   , {mod, {oauth1_core_app, []}}
   , {env,

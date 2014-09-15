@@ -26,6 +26,7 @@
     , cowlib
     , bstr
     , hope
+    , crdt
     , oauth1_core
     ]).
 -define(CFG_KEY_SIG                 , sig).

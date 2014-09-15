@@ -27,6 +27,7 @@
     , cowlib
     , bstr
     , hope
+    , crdt
     , ?APP
     ]).
 
@@ -95,9 +96,11 @@ t_crud(Cfg) ->
     true   = oauth1_authorizations:is_authorized(AuthsWithAB, RealmA),
     true   = oauth1_authorizations:is_authorized(AuthsWithAB, RealmB),
 
-    AuthsWithA = oauth1_authorizations:remove(AuthsWithAB, RealmB),
-    AuthsEmpty = oauth1_authorizations:remove(AuthsWithA , RealmA),
-    AuthsEmpty = oauth1_authorizations:remove(AuthsEmpty , <<"gabage">>).
+    AuthsWithABRem    = oauth1_authorizations:remove(AuthsWithAB, RealmB),
+    false             = oauth1_authorizations:is_authorized(AuthsWithABRem, RealmB),
+    AuthsWithARemBRem = oauth1_authorizations:remove(AuthsWithABRem , RealmA),
+    false             = oauth1_authorizations:is_authorized(AuthsWithARemBRem, RealmA),
+    AuthsEmpty        = oauth1_authorizations:remove(AuthsEmpty , <<"gabage">>).
 
 t_storage(Cfg) ->
     {some, Auths}    = hope_kv_list:get(Cfg, ?LIT_AUTHS),
