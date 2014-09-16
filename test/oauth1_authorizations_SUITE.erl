@@ -115,7 +115,7 @@ t_storage_corrupt_gabage(_Cfg) ->
     ok = oauth1_mock_storage:set_next_result_fetch({ok, [MockData]}),
     ClientID = {client, <<"fake-client-id">>},
     FetchResult = oauth1_authorizations:fetch(ClientID),
-    {error, {data_format_invalid, MockData}} = FetchResult,
+    {error, {data_format_invalid, [MockData]}} = FetchResult,
     {ok, ok} = oauth1_mock_storage:stop().
 
 t_storage_corrupt_not_list(_Cfg) ->
@@ -124,7 +124,7 @@ t_storage_corrupt_not_list(_Cfg) ->
     ok = oauth1_mock_storage:set_next_result_fetch({ok, [MockData]}),
     ClientID = {client, <<"fake-client-id">>},
     FetchResult = oauth1_authorizations:fetch(ClientID),
-    {error, {data_format_invalid, MockData}} = FetchResult,
+    {error, {data_format_invalid, [MockData]}} = FetchResult,
     {ok, ok} = oauth1_mock_storage:stop().
 
 t_storage_corrupt_not_all_bins_in_list(_Cfg) ->
@@ -133,5 +133,5 @@ t_storage_corrupt_not_all_bins_in_list(_Cfg) ->
     ok = oauth1_mock_storage:set_next_result_fetch({ok, [MockData]}),
     ClientID = {client, <<"fake-client-id">>},
     FetchResult = oauth1_authorizations:fetch(ClientID),
-    {error, {data_format_invalid, MockData}} = FetchResult,
+    {error, {data_format_invalid, [MockData]}} = FetchResult,
     {ok, ok} = oauth1_mock_storage:stop().

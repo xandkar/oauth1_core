@@ -38,6 +38,8 @@
 
 -define(STORAGE_BUCKET, ?config:get(storage_bucket_authorizations)).
 
+-define(warn, error_logger:warning_msg).
+
 
 -spec cons(client()) ->
     t().
@@ -81,7 +83,7 @@ store(#t
 -spec fetch(client()) ->
     hope_result:t(t(), Error)
     when Error :: ?storage:error()
-                | {data_format_invalid, Data :: binary()}
+                | {data_format_invalid, [Data :: binary()]}
        .
 fetch({client, <<ClientID/binary>>}=Client) ->
     Bucket = ?STORAGE_BUCKET,
@@ -89,17 +91,43 @@ fetch({client, <<ClientID/binary>>}=Client) ->
     case ?storage:fetch(Bucket, Key)
     of  {error, _}=Error ->
             Error
-    % TODO: Handle multiple values!
-    ;   {ok, [RealmsBin]} ->
-            case crdt_set_2p:of_bin(RealmsBin, fun realm_of_bin/1)
-            of  {error, _} ->
-                    {error, {data_format_invalid, RealmsBin}}
-            ;   {ok, Realms} ->
-                    T = #t
-                        { client = Client
-                        , realms = Realms
-                        },
-                    {ok, T}
+    ;   {ok, [_|_]=Bins} ->
+            Parse = fun (B) -> crdt_set_2p:of_bin(B, fun realm_of_bin/1) end,
+            ParseResults = lists:map(Parse, Bins),
+            IsSuccess =
+                fun ({ok    , _}) -> true
+                ;   ({error , _}) -> false
+                end,
+            ReturnConstruct =
+                fun (Successes) ->
+                    Construct =
+                        fun (Realms) ->
+                            #t
+                            { client = Client
+                            , realms = Realms
+                            }
+                        end,
+                    case Successes
+                    of  [{ok, Realms}] ->
+                            {ok, Construct(Realms)}
+                    ;   [_|_] ->
+                            Msg = "~b authorization set siblings found. Merging.~n",
+                            ?warn(Msg, [length(Successes), Successes]),
+                            [R | Rs] = [R || {ok, R} <- Successes],
+                            Merge = fun crdt_set_2p:merge/2,
+                            Realms = lists:foldl(Merge, R, Rs),
+                            {ok, Construct(Realms)}
+                    end
+                end,
+            case lists:partition(IsSuccess, ParseResults)
+            of  {[]=_Successes, [_|_]=_Failures} ->
+                    {error, {data_format_invalid, Bins}}
+            ;   {[_|_]=Successes, [_|_]=Failures} ->
+                    Msg = "~b authorization set siblings failed to parse: ~p~n",
+                    ?warn(Msg, [length(Failures), Failures]),
+                    ReturnConstruct(Successes)
+            ;   {[_|_]=Successes, []=_Failures} ->
+                    ReturnConstruct(Successes)
             end
     end.
 
