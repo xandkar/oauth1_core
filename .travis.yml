@@ -11,3 +11,7 @@ otp_release:
 
 script:
     "make ci"
+
+cache:
+    directories:
+    - logs
