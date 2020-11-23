@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/ibnfirnas/oauth1_core.svg?branch=master)](https://travis-ci.org/ibnfirnas/oauth1_core)
+[![Build Status](https://travis-ci.org/xandkar/oauth1_core.svg?branch=master)](https://travis-ci.org/xandkar/oauth1_core)
 
 oauth1_core
 ===========
